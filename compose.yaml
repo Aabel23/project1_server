@@ -1,0 +1,32 @@
+# Local development only. No production network/authentication assumptions.
+name: flexmix-foundation
+services:
+  mysql:
+    image: mysql:8.4.11
+    environment:
+      MYSQL_DATABASE: ${FLEXMIX_DB_NAME:?Set FLEXMIX_DB_NAME in .env}
+      MYSQL_USER: ${FLEXMIX_DB_USER:?Set FLEXMIX_DB_USER in .env}
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/root_password
+    secrets:
+      - db_password
+      - root_password
+    ports:
+      - "127.0.0.1:${FLEXMIX_DB_PORT:-13306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'MYSQL_PWD="$$(cat /run/secrets/db_password)" mysql --protocol=TCP -h 127.0.0.1 -u"$${MYSQL_USER}" --database="$${MYSQL_DATABASE}" --execute="SELECT 1" >/dev/null 2>&1'
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+secrets:
+  db_password:
+    file: ${FLEXMIX_DB_PASSWORD_FILE:?Set FLEXMIX_DB_PASSWORD_FILE in .env}
+  root_password:
+    file: ${MYSQL_ROOT_PASSWORD_FILE:?Set MYSQL_ROOT_PASSWORD_FILE in .env}
+volumes:
+  mysql_data:

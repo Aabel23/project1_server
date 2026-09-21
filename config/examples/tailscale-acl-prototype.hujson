@@ -1,0 +1,14 @@
+// Temporary Phase 01 prototype template. Apply only in a dedicated tailnet.
+// Q-15 still owns the production identity, certificate and ACL policy.
+{
+  "tagOwners": {
+    "tag:flexmix-hub": ["autogroup:admin"],
+    "tag:flexmix-machine": ["autogroup:admin"],
+  },
+  "acls": [
+    // A machine may call the Hub; this does not expose the machine backend.
+    {"action": "accept", "src": ["tag:flexmix-machine"], "dst": ["tag:flexmix-hub:443"]},
+    // Operators may use Tailscale SSH for maintenance.
+    {"action": "accept", "src": ["group:flexmix-operators"], "dst": ["tag:flexmix-machine:22"]},
+  ],
+}

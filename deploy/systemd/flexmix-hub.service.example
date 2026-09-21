@@ -1,0 +1,17 @@
+[Unit]
+Description=FlexMix Hub
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=flexmix
+Group=flexmix
+WorkingDirectory=/opt/flexmix-hub
+EnvironmentFile=/opt/flexmix-hub/.env
+ExecStart=/opt/flexmix-hub/.venv/bin/uvicorn flexmix_hub.main:create_app --factory --host 127.0.0.1 --port 8010 --proxy-headers --forwarded-allow-ips=127.0.0.1
+Restart=on-failure
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

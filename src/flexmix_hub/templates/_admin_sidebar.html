@@ -1,0 +1,8 @@
+<aside class="sidebar">
+  <a class="brand" href="/"><span class="brand-mark">F</span><span>FlexMix <strong>Hub</strong></span></a>
+  <nav class="admin-nav" aria-label="Điều hướng quản trị">
+    <a class="nav-link {{ 'active' if active_page == 'dashboard' else '' }}" href="/" {% if active_page == 'dashboard' %}aria-current="page"{% endif %}><span aria-hidden="true">🏠</span> Trang tổng quan</a>
+    {% for group, items in nav_groups %}<div class="nav-group"><div class="nav-label">{{ group }}</div>{% for label, slug in items %}<a class="nav-link nav-child {{ 'active' if active_page == slug else '' }}" href="/admin/{{ slug }}" {% if active_page == slug %}aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}</div>{% endfor %}
+  </nav>
+  <div class="sidebar-foot"><span class="sidebar-dot"></span> Môi trường thử nghiệm</div>
+</aside>

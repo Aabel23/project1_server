@@ -1,0 +1,1115 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Thiet ke kien truc Hub trung tam quan ly nhieu may FlexMix, ban 3: nam loi chan, nang luc may, vung ma nguyen lieu, tien va ton kho, hop dong du lieu, ma tran suy giam, lo trinh 7 pha.">
+<meta name="generator" content="doc thiet ke ban 3 — doc theo ma nguon version1.0 @ ce17f05">
+<style>
+html{color-scheme:light dark}
+body{margin:0;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>Kiến trúc đội máy FlexMix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#f5f7f5; --surface:#ffffff; --surface-2:#eef1ef;
+  --ink:#12181a; --ink-2:#3d4a4d; --ink-3:#6b7a7d;
+  --rule:#d7dedb; --rule-strong:#b9c4c0;
+  --down:#3f4fc4; --down-soft:#e7e9fa;
+  --up:#0d7a70; --up-soft:#dcefec;
+  --hold:#9a6510; --hold-soft:#f6ecd9;
+  --danger:#a72e2a; --danger-soft:#f8e6e4;
+  --shadow:0 1px 2px rgba(18,24,26,.06),0 8px 24px -18px rgba(18,24,26,.35);
+  --maxw:1140px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1214; --surface:#161c1e; --surface-2:#1d2426;
+    --ink:#e3eae8; --ink-2:#aab6b4; --ink-3:#7c8a88;
+    --rule:#28312f; --rule-strong:#3a4644;
+    --down:#93a0ff; --down-soft:#1c2140;
+    --up:#4bd2be; --up-soft:#0f2c29;
+    --hold:#e3ab4f; --hold-soft:#2c2313;
+    --danger:#f08b84; --danger-soft:#33191a;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -20px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1214; --surface:#161c1e; --surface-2:#1d2426;
+  --ink:#e3eae8; --ink-2:#aab6b4; --ink-3:#7c8a88;
+  --rule:#28312f; --rule-strong:#3a4644;
+  --down:#93a0ff; --down-soft:#1c2140;
+  --up:#4bd2be; --up-soft:#0f2c29;
+  --hold:#e3ab4f; --hold-soft:#2c2313;
+  --danger:#f08b84; --danger-soft:#33191a;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -20px rgba(0,0,0,.9);
+}
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px 96px}
+h1,h2,h3{font-family:Archivo,"IBM Plex Sans",sans-serif;text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,5vw,52px);font-weight:700;letter-spacing:-.022em;line-height:1.04}
+h2{font-size:clamp(21px,2.4vw,27px);font-weight:600;letter-spacing:-.014em;line-height:1.18}
+h3{font-size:16px;font-weight:600;letter-spacing:-.004em}
+p{margin:0}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+code{font-size:.875em;background:var(--surface-2);border:1px solid var(--rule);
+  border-radius:4px;padding:.08em .34em;color:var(--ink)}
+a{color:var(--down)}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+
+header.mast{padding:56px 0 34px;border-bottom:2px solid var(--ink);
+  display:flex;flex-direction:column;gap:18px}
+.mast .lede{font-size:18px;line-height:1.55;color:var(--ink-2);max-width:64ch}
+.mast .lede strong{color:var(--ink);font-weight:600}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));
+  gap:0;border-top:1px solid var(--rule);margin-top:6px}
+.fact{padding:14px 16px 12px;border-right:1px solid var(--rule)}
+.fact:last-child{border-right:0}
+.fact dt{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);margin:0 0 3px}
+.fact dd{margin:0;font-family:Archivo,sans-serif;font-weight:600;font-size:17px;
+  letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.fact dd span{font-family:"IBM Plex Sans",sans-serif;font-weight:400;font-size:12.5px;
+  color:var(--ink-3);display:block;letter-spacing:0}
+
+section{padding-top:52px;display:flex;flex-direction:column;gap:20px}
+.sechead{display:flex;flex-direction:column;gap:7px;
+  border-top:1px solid var(--rule-strong);padding-top:14px}
+.prose{max-width:68ch;display:flex;flex-direction:column;gap:14px;color:var(--ink-2)}
+.prose strong{color:var(--ink);font-weight:600}
+
+.axiom{background:var(--surface);border:1px solid var(--rule);
+  border-left:4px solid var(--danger);border-radius:3px;padding:20px 24px;
+  display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow)}
+.axiom .t{font-family:Archivo,sans-serif;font-weight:700;font-size:19px;
+  letter-spacing:-.012em;color:var(--ink)}
+.axiom p{color:var(--ink-2);max-width:70ch}
+
+/* blocking prerequisites */
+.blockers{display:flex;flex-direction:column;gap:14px}
+.blocker{background:var(--surface);border:1px solid var(--rule);border-radius:3px;
+  display:grid;grid-template-columns:auto 1fr;gap:0 18px;padding:18px 22px;
+  box-shadow:var(--shadow);border-top:3px solid var(--danger)}
+.blocker .tag{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--danger);background:var(--danger-soft);
+  border:1px solid var(--danger);border-radius:2px;padding:3px 8px;align-self:start;
+  white-space:nowrap}
+.blocker h3{grid-column:2;margin-bottom:6px}
+.blocker .b{grid-column:2;display:flex;flex-direction:column;gap:9px;
+  font-size:13.5px;color:var(--ink-2);max-width:72ch}
+.blocker .b b{color:var(--ink)}
+.blocker .fix{border-left:2px solid var(--up);padding-left:14px;color:var(--ink-2)}
+.blocker .fix strong{color:var(--up);font-weight:600}
+@media (max-width:640px){
+  .blocker{grid-template-columns:1fr}
+  .blocker h3,.blocker .b{grid-column:1}
+}
+
+.figure{background:var(--surface);border:1px solid var(--rule);border-radius:3px;
+  padding:8px 8px 0;box-shadow:var(--shadow);overflow-x:auto}
+.figure svg{display:block;min-width:820px;width:100%;height:auto}
+figcaption{padding:10px 14px 14px;font-size:13px;color:var(--ink-3);
+  border-top:1px solid var(--rule);margin-top:4px}
+.s-hub{fill:var(--down-soft);stroke:var(--down)}
+.s-mach{fill:var(--surface-2);stroke:var(--rule-strong)}
+.s-chip{fill:var(--surface);stroke:var(--rule)}
+.t-title{fill:var(--ink);font-family:Archivo,sans-serif;font-weight:600;font-size:15px}
+.t-sub{fill:var(--ink-3);font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.06em}
+.t-body{fill:var(--ink-2);font-family:"IBM Plex Sans",sans-serif;font-size:12px}
+.t-mono{fill:var(--ink-2);font-family:"IBM Plex Mono",monospace;font-size:11px}
+.t-down{fill:var(--down);font-family:"IBM Plex Sans",sans-serif;font-size:12px;font-weight:600}
+.t-up{fill:var(--up);font-family:"IBM Plex Sans",sans-serif;font-size:12px;font-weight:600}
+.l-down{stroke:var(--down);fill:none;stroke-width:2}
+.l-up{stroke:var(--up);fill:none;stroke-width:2}
+.l-dash{stroke:var(--rule-strong);fill:none;stroke-width:1;stroke-dasharray:4 4}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--rule);border-radius:3px;
+  background:var(--surface);box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;min-width:660px;font-size:13.5px}
+thead th{text-align:left;font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+  font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
+  padding:11px 16px;border-bottom:1px solid var(--rule-strong);white-space:nowrap}
+tbody td{padding:11px 16px;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink-2)}
+tbody tr:last-child td{border-bottom:0}
+tbody td:first-child{color:var(--ink);font-family:"IBM Plex Mono",monospace;
+  font-size:12.5px;white-space:nowrap}
+tbody tr:hover td{background:var(--surface-2)}
+table.matrix tbody td{white-space:nowrap}
+table.matrix tbody td:first-child{white-space:normal;min-width:200px}
+table.matrix tbody td:last-child{white-space:normal}
+
+.dir,.pill{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+  font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;
+  letter-spacing:.04em;padding:2px 8px;border-radius:2px;border:1px solid transparent}
+.dir b{font-size:13px;line-height:1}
+.d-down{background:var(--down-soft);color:var(--down);border-color:var(--down)}
+.d-up{background:var(--up-soft);color:var(--up);border-color:var(--up)}
+.d-hold{background:var(--hold-soft);color:var(--hold);border-color:var(--hold)}
+.p-ok{background:var(--up-soft);color:var(--up);border-color:var(--up)}
+.p-warn{background:var(--hold-soft);color:var(--hold);border-color:var(--hold)}
+.p-stop{background:var(--danger-soft);color:var(--danger);border-color:var(--danger)}
+
+/* capacity ladder */
+.ladder{background:var(--surface);border:1px solid var(--rule);border-radius:3px;
+  padding:22px 24px;display:flex;flex-direction:column;gap:16px;box-shadow:var(--shadow)}
+.rung{display:grid;grid-template-columns:210px 1fr 62px;gap:16px;align-items:center}
+.rung .lab{font-size:13px;color:var(--ink)}
+.rung .lab span{display:block;font-size:11.5px;color:var(--ink-3);
+  font-family:"IBM Plex Mono",monospace}
+.rung .bar{height:16px;background:var(--surface-2);border:1px solid var(--rule);
+  border-radius:2px;overflow:hidden}
+.rung .bar i{display:block;height:100%;background:var(--down);opacity:.85}
+.rung.cap .bar i{background:var(--danger)}
+.rung.phys .bar i{background:var(--hold)}
+.rung .num{font-family:Archivo,sans-serif;font-weight:700;font-size:19px;
+  text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+@media (max-width:640px){.rung{grid-template-columns:1fr 52px}.rung .bar{grid-column:1/-1}}
+
+/* lifecycle */
+.life{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.life .st{background:var(--surface);padding:16px 18px;display:flex;
+  flex-direction:column;gap:6px}
+.life .st .k{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3)}
+.life .st .n{font-family:Archivo,sans-serif;font-weight:600;font-size:14.5px;color:var(--ink)}
+.life .st p{font-size:12.5px;color:var(--ink-2)}
+
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+.flowcard{background:var(--surface);border:1px solid var(--rule);border-radius:3px;
+  padding:20px 22px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
+.flowcard.down{border-top:3px solid var(--down)}
+.flowcard.up{border-top:3px solid var(--up)}
+.flowcard h3{display:flex;align-items:baseline;gap:9px}
+.flowcard h3 .arrow{font-family:"IBM Plex Mono",monospace;font-size:15px}
+.down h3 .arrow{color:var(--down)}
+.up h3 .arrow{color:var(--up)}
+ol.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;
+  flex-direction:column;gap:9px}
+ol.steps li{counter-increment:s;position:relative;padding-left:28px;font-size:13.5px;
+  color:var(--ink-2);line-height:1.5}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:2px;width:18px;
+  height:18px;border-radius:50%;display:grid;place-items:center;
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;background:var(--surface-2);
+  color:var(--ink-3);border:1px solid var(--rule-strong)}
+.down ol.steps li::before{background:var(--down-soft);color:var(--down);border-color:var(--down)}
+.up ol.steps li::before{background:var(--up-soft);color:var(--up);border-color:var(--up)}
+
+.note{border-left:2px solid var(--rule-strong);padding:2px 0 2px 16px;font-size:13.5px;
+  color:var(--ink-3);max-width:70ch}
+.note b{color:var(--ink-2);font-weight:600}
+
+.phases{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--rule)}
+.phase{display:grid;grid-template-columns:64px 1fr 190px;gap:22px;padding:20px 4px;
+  border-bottom:1px solid var(--rule);align-items:start}
+.phase .n{font-family:Archivo,sans-serif;font-weight:700;font-size:30px;
+  letter-spacing:-.03em;color:var(--rule-strong);line-height:1;
+  font-variant-numeric:tabular-nums;padding-top:2px}
+.phase.zero .n{color:var(--danger)}
+.phase .body{display:flex;flex-direction:column;gap:6px}
+.phase .body p{font-size:13.5px;color:var(--ink-2);max-width:60ch}
+.phase .risk{display:flex;flex-direction:column;gap:4px}
+.phase .risk .lab{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3)}
+.phase .risk .val{font-size:13px;color:var(--ink-2)}
+@media (max-width:720px){
+  .phase{grid-template-columns:44px 1fr;gap:14px}
+  .phase .risk{grid-column:2}
+}
+
+.rejects{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.reject{background:var(--surface);padding:18px 20px;display:flex;flex-direction:column;gap:7px}
+.reject .h{font-family:Archivo,sans-serif;font-weight:600;font-size:14.5px;color:var(--ink);
+  display:flex;gap:8px;align-items:baseline}
+.reject .x{color:var(--danger);font-family:"IBM Plex Mono",monospace;font-size:13px}
+.reject p{font-size:13px;color:var(--ink-2)}
+
+.qs{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--rule)}
+.q{padding:15px 0;border-bottom:1px solid var(--rule);display:grid;
+  grid-template-columns:34px 1fr;gap:14px;align-items:start}
+.q .k{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--hold);padding-top:3px}
+.q .t{font-size:14px;color:var(--ink);font-weight:600}
+.q .d{font-size:13.5px;color:var(--ink-2);margin-top:3px;max-width:66ch}
+
+footer{margin-top:56px;padding-top:20px;border-top:2px solid var(--ink);font-size:12.5px;
+  color:var(--ink-3);display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between}
+</style>
+<style media="print">
+:root{
+  --paper:#ffffff;--surface:#ffffff;--surface-2:#f2f4f3;
+  --ink:#12181a;--ink-2:#3d4a4d;--ink-3:#6b7a7d;
+  --rule:#d7dedb;--rule-strong:#b9c4c0;--shadow:none;
+}
+*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+@page{margin:13mm}
+.wrap{max-width:none;padding:0}
+header.mast{padding-top:0}
+section{padding-top:24px;break-inside:auto}
+.sechead{break-after:avoid}
+h2,h3{break-after:avoid}
+.axiom,.flowcard,.reject,.phase,.q,.figure,.blocker,.ladder,.life .st{break-inside:avoid}
+tbody tr{break-inside:avoid}
+.figure svg{min-width:0}
+.tablewrap,.figure{overflow:visible}
+table{min-width:0;font-size:10.5px}
+table.matrix tbody td{white-space:normal}
+thead{display:table-header-group}
+tbody td,thead th{padding:6px 9px}
+body{font-size:11.5px}
+.prose{max-width:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="mast">
+  <div class="eyebrow">Đề xuất thiết kế · bản 3 · 10/09/2026 · đọc theo mã nguồn version1.0 @ ce17f05</div>
+  <h1>Kiến trúc đội máy FlexMix</h1>
+  <p class="lede">Nhiều máy độc lập, một Hub. Máy đang chạy hôm nay là một cửa hàng hoàn chỉnh chỉ có điều nó đứng một mình. <strong>Thiết kế này giữ nguyên điều đó</strong> và thêm một Hub nắm thực đơn, theo dõi máy, và phát hành cập nhật. Bản 3 được viết sau một lượt đọc lại toàn bộ mã nguồn: số lỗi chặn tăng từ ba lên <strong>năm</strong>, và ba mảng bản 2 chưa chạm tới được thêm vào — <strong>tiền và tồn kho</strong>, <strong>hợp đồng dữ liệu trên dây</strong>, và <strong>bán kính thiệt hại thật sự khi Hub bị chiếm quyền</strong>.</p>
+
+  <dl class="facts">
+    <div class="fact"><dt>Mỗi máy</dt><dd>Pi 5 <span>Ubuntu 24.04, MySQL nội bộ</span></dd></div>
+    <div class="fact"><dt>Chỉ nghe trên</dt><dd>lo + 100.x <span>Tailscale, không bao giờ Wi-Fi tiệm</span></dd></div>
+    <div class="fact"><dt>Khoá QR</dt><dd>riêng từng máy <span>64 hex, mất là mất nhãn</span></dd></div>
+    <div class="fact"><dt>Bơm mỗi máy</dt><dd>10 <span>+ 16 vị trí panel tay</span></dd></div>
+    <div class="fact"><dt>Pha đồng thời</dt><dd>1 ly <span>một current_recipe.json</span></dd></div>
+    <div class="fact"><dt>Vé sống</dt><dd>24 giờ <span>TICKET_LIFETIME_HOURS</span></dd></div>
+  </dl>
+</header>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Nếu bạn đã đọc bản 2</div>
+    <h2>Bản 3 đổi gì</h2>
+  </div>
+  <div class="prose">
+    <p>Nguyên tắc nền không đổi, và không có kết luận nào của bản 2 bị lật. Bản 3 là kết quả của một lượt đọc lại toàn bộ mã nguồn để trả lời đúng một câu hỏi: <em>còn trường hợp nào thiết kế này chưa che không?</em> Có — mười một chỗ, và ba trong số đó là những lời hứa bản 2 tự đưa ra ở chỗ này rồi mâu thuẫn với chính nó ở chỗ khác.</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Đổi gì</th><th>Vì sao</th></tr></thead>
+      <tbody>
+        <tr><td><b>Lỗi chặn: 3 → 5</b></td><td>Thêm <em>không có bảng ghi phiên bản schema</em> và <em>không có bản sao lưu nào</em>. Cả hai đều là điều kiện tiên quyết của những lời hứa bản 2 đã viết.</td></tr>
+        <tr><td><b>Lỗi chặn số 1 rộng gấp ba</b></td><td>Bảy file runtime nằm trong git, không phải hai — và hệ quả thật không phải “git ghi đè hiệu chuẩn”, mà là <code>git pull</code> trên máy đang bán hàng <b>đã hỏng sẵn</b>.</td></tr>
+        <tr><td><b>Mục mới: Tiền, vé, và tồn kho</b></td><td>Bản 2 không hỏi con số doanh thu nghĩa là gì. Nó có ba chỗ bất ngờ, và một trong số đó là một lỗi lệch giá đang tồn tại hôm nay.</td></tr>
+        <tr><td><b>Mục mới: Hợp đồng dữ liệu trên dây</b></td><td>Bốn gói tin, đủ để hai người viết Hub và agent độc lập với nhau.</td></tr>
+        <tr><td><b>Vùng mã 1–24 là tài nguyên khan hiếm</b></td><td>Bản 2 nói đúng về trần 24 nhưng chưa thấy rằng nguyên liệu bơm thường cũng tiêu số trong vùng đó, và bảng ánh xạ của nó là bảng tra cứu chứ chưa phải bộ cấp phát.</td></tr>
+        <tr><td><b>Sửa: Hub bị chiếm quyền</b></td><td>Bản 2 vừa hứa Hub không chạy được bơm, vừa cho Hub lệnh <code>apply-release</code>. Hai câu không thể cùng đúng. Cách giữ cả hai: bản phát hành ký bằng khoá Hub không giữ.</td></tr>
+        <tr><td><b>Sửa: mất thẻ nhớ</b></td><td><em>“Khôi phục được mọi thứ trừ khoá QR”</em> chỉ đúng sau khi lỗi chặn thứ năm được sửa.</td></tr>
+        <tr><td><b>Sửa: <code>threshold_gram</code></b></td><td>Bản 2 xếp nó vào nhóm máy làm chủ; thực ra nó được tính từ công thức, tức là dẫn xuất từ dữ liệu của Hub.</td></tr>
+        <tr><td><b>Bảng tình huống: +7 hàng</b></td><td>Sáu trong số đó không liên quan tới Hub — chúng là những cách máy hôm nay đã hỏng được rồi. Nặng nhất: <b>một khách quét rồi bỏ đi làm máy kẹt vô hạn</b>.</td></tr>
+        <tr><td><b>Cảnh báo: 10 → 17</b></td><td>Danh sách bản 2 đo những thứ đang hỏng. Cách một đội máy mất tiền nhiều nhất là <em>máy khoẻ mà tiệm không bán được</em>, và không cảnh báo nào cũ nhìn thấy nó.</td></tr>
+        <tr><td><b>Bảng quyền sở hữu: 17 → 25 dòng</b></td><td><code>recipe_action</code>, <code>drink_category_mapping</code>, <code>deleted_at</code> và bốn thứ nữa chưa có chủ. Một dòng không có chủ là một dòng hai bên cùng ghi.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Ràng buộc mà mọi thứ còn lại suy ra từ đó</div>
+    <h2>Một nguyên tắc</h2>
+  </div>
+  <div class="axiom">
+    <div class="t">Hub không bao giờ nằm trên đường đi của một lần bán hay một lần pha.</div>
+    <p>Chính mã nguồn của bạn đã lập luận điều này ở ba chỗ. <code>order_mode.py</code> và <code>display_mode.py</code> đều giữ công tắc trong file JSON thay vì MySQL, và đều nói rõ lý do: <em>“nó phải trả lời được cả khi MySQL không trả lời.”</em> Chú thích của <code>order_ticket</code> gọi máy là <em>“standalone — bảng này là thẩm quyền duy nhất quyết định nhãn nào còn dùng được.”</em></p>
+    <p>Hệ quả: <strong>Hub là một đầu đồng bộ và một người quan sát, không phải một phụ thuộc.</strong> Máy cả tuần không liên lạc được với Hub thì bị suy giảm — thực đơn cũ, không báo cáo — chứ không hỏng.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Phải sửa xong trước khi nối máy thứ hai</div>
+    <h2>Năm lỗi chặn</h2>
+  </div>
+  <div class="prose">
+    <p>Đây không phải việc của Hub. Đây là năm chỗ trong mã nguồn hiện tại vốn đúng với <em>một</em> máy và sẽ hỏng ngay khi có máy thứ hai — ba trong số đó hỏng âm thầm, nghĩa là bạn sẽ biết qua lời khách phàn nàn chứ không qua một dòng log.</p>
+    <p>Bản 2 kể ba cái. Lượt đọc lại mã nguồn cho bản này tìm thêm hai, và cả hai đều không phải chuyện đội máy — chúng là hai lời hứa mà thiết kế bản 2 đã đưa ra ở chỗ khác trong chính tài liệu này (“máy quá cũ thì từ chối áp bản chụp”, “mất thẻ nhớ thì khôi phục được mọi thứ trừ khoá QR”) mà hệ thống hôm nay <b>không có cách nào giữ</b>.</p>
+  </div>
+  <div class="blockers">
+
+    <div class="blocker">
+      <div class="tag">Hỏng âm thầm</div>
+      <h3>Bảy file do máy tự ghi lúc chạy đang nằm trong git</h3>
+      <div class="b">
+        <p>Bản 2 kể hai file. Đếm lại bằng <code>git ls-files</code> thì là bảy, và chúng thuộc ba loại khác nhau:</p>
+        <p><b>Hiệu chuẩn</b> — <code>configuration/pump_calib.json</code>, <code>configuration/calib_loadcell.json</code>. <code>.gitignore</code> dòng 62–63 có sẵn hai dòng bỏ qua chúng nhưng <b>đang bị chú thích</b>, kèm ghi chú <em>“giữ giá trị mặc định đã commit; chỉ bật lại nếu muốn bỏ qua drift trên từng máy.”</em> Bơm 1 của máy A chạy 9.552823 g/s với vùng chết 0.284 g; bơm 1 của máy B là một dây khác, một mô-tơ khác. Ghi đè là <b>không lỗi nào được ném ra</b> — máy vẫn pha, chỉ là sai lượng, mãi mãi, cho tới khi có người nếm ra.</p>
+        <p><b>Cấu hình phần cứng của riêng máy</b> — <code>configuration/display_mode.json</code> và <code>configuration/machine.py</code>. Cái thứ nhất nguy hiểm hơn cả hiệu chuẩn: nó giữ mode <code>xrandr</code> của màn hình kiosk. Đặt sai mode trên một máy <b>không có bàn phím và không có chuột</b> là một màn hình đen, và <code>display_mode.py</code> nói rõ vì sao — chỉ những mode <code>xrandr --query</code> báo có mới được nhận, và trang quản trị mới có nút tự hoàn tác 20 giây. Một lần <code>git checkout</code> đi vòng qua cả hai lớp bảo vệ đó. Cái thứ hai mang <code>PUMP_GPIO</code>, địa chỉ I2C, tên hàng đợi máy in — hai máy đi dây khác nhau không thể dùng chung một file trong git.</p>
+        <p><b>Trạng thái đang chạy</b> — <code>store_gui/menu-data.js</code> (sync_menu ghi lại mỗi phút), <code>order/current_recipe.json</code> (ly đang pha), <code>scan/raw_qr.json</code> (mã vừa quét), <code>scan/qr_codes/index.json</code>. Đây là chỗ vấn đề đổi hình dạng: những file này thay đổi <em>liên tục</em>, nên cây làm việc của một máy đang bán hàng <b>luôn bẩn</b>. Đúng lúc viết tài liệu này, <code>git status</code> trên máy đang chạy báo <code>M order/current_recipe.json</code>.</p>
+        <p>Hệ quả thật sự vì thế <em>không</em> phải “git lặng lẽ ghi đè hiệu chuẩn”. Nó là: <b><code>git pull</code> trên một máy đang bán hàng sẽ thất bại</b> với <em>“local changes would be overwritten”</em>, nghĩa là hôm nay <b>không tồn tại một đường cập nhật nào chạy được</b>. Và phản xạ tự nhiên khi gặp thông báo đó — <code>git checkout -- .</code> hoặc <code>git reset --hard</code> — chính là thao tác xoá sạch hiệu chuẩn và mode màn hình. Lỗi này ở trạng thái xấu nhất một lỗi có thể ở: nó chặn việc đúng và mời gọi việc sai.</p>
+        <div class="fix"><strong>Cách sửa — ba việc, làm được ngay hôm nay:</strong>
+          <br>1. <code>git rm --cached</code> cả bảy file, bật lại hai dòng trong <code>.gitignore</code> và thêm năm dòng còn lại. Commit một bản mẫu <code>.example</code> cho hai file hiệu chuẩn nếu muốn máy mới có số khởi điểm.
+          <br>2. Tách phần riêng của máy trong <code>machine.py</code> ra <code>/etc/flexmix/machine_profile.json</code> — <code>machine.py</code> đọc file đó và fall back về giá trị trong mã khi không có, đúng lối <code>order_mode.py</code> đang làm. <code>deploy/kiosk/flexmix-backend.service</code> cũng đang ghi cứng <code>User=flexxource</code> và <code>WorkingDirectory=/home/flexxource/hungvu/version1.0</code>: cùng loại, cùng cách sửa.
+          <br>3. <b>Phát hành không được là <code>git pull</code> trên cây đang chạy.</b> Checkout tag ra một thư mục mới rồi đổi symlink, để trạng thái lúc chạy không bao giờ sống trong một cây git. Việc này biến lùi bản thành một lần đổi symlink, và làm cả nhóm lỗi trên không thể tái diễn.</div>
+      </div>
+    </div>
+
+    <div class="blocker">
+      <div class="tag">Hỏng âm thầm</div>
+      <h3>Số hiệu máy do người gõ tay, mặc định là 1</h3>
+      <div class="b">
+        <p><code>deploy/install.sh</code> phase <code>secrets</code> hỏi <em>“Số hiệu máy (1-999999) [1]”</em> và nhận Enter là 1. Không có gì kiểm tra số đó đã bị dùng chưa.</p>
+        <p>MID nằm bên trong phần mã hoá của mọi payload và được đối chiếu lúc quét. Vì mỗi máy có khoá riêng nên MID trùng <em>không</em> làm nhãn chạy nhầm máy — <code>qrproto_config.py</code> nói đúng, nó là phòng thủ lớp hai. Nhưng với Hub thì MID là <b>khoá định danh của mọi báo cáo</b>: hai máy cùng MID 1 sẽ trộn doanh thu, trộn nhật ký lỗi, và không ai nhìn ra vì cả hai đều báo cáo hợp lệ.</p>
+        <div class="fix"><strong>Cách sửa:</strong> Hub cấp MID lúc đăng ký máy, phase <code>secrets</code> hỏi Hub thay vì hỏi người, và từ chối một MID đã có chủ. Bỏ giá trị mặc định 1 đi.</div>
+      </div>
+    </div>
+
+    <div class="blocker">
+      <div class="tag">Hỏng ồn ào</div>
+      <h3>Pi không có đồng hồ chạy khi mất điện</h3>
+      <div class="b">
+        <p>Raspberry Pi không có pin nuôi RTC. Mất điện qua đêm rồi bật lại mà chưa kịp đồng bộ NTP thì đồng hồ sai — và <b>bốn thứ trong hệ thống này đều đọc đồng hồ</b>: hạn 24 giờ của vé tính từ <code>created_at</code>, kiểm tra tươi mới TS trong <code>qrproto.verify()</code>, thứ tự <code>error_log</code> ở độ chính xác mili-giây, và hạn 12 giờ của token đăng nhập.</p>
+        <p>Hậu quả cụ thể: máy vừa bật có thể <b>từ chối một nhãn hoàn toàn hợp lệ</b> vì tưởng nó đến từ tương lai, hoặc chấp nhận một nhãn đã quá hạn. Thêm Hub thì có thêm hậu quả thứ hai: mốc quét theo thời gian của <code>order_ticket.updated_at</code> sẽ nhảy lùi và bỏ sót dòng.</p>
+        <div class="fix"><strong>Cách sửa:</strong> bắt buộc <code>systemd-timesyncd</code> và thêm <code>After=time-sync.target</code> · <code>Wants=time-sync.target</code> vào <code>flexmix-backend.service</code> (unit hiện chỉ có <code>After=network.target mysql.service</code>) trước khi nhận đơn; agent báo độ lệch đồng hồ trong mỗi nhịp tim và Hub cảnh báo khi lệch quá 5 giây. Với máy hay mất điện, một mô-đun RTC I2C gắn thêm là vài chục nghìn đồng. <b>Thêm một hệ quả bản 2 chưa kể:</b> báo cáo doanh thu gom nhóm theo <code>completed_at</code> ở <em>ngày địa phương</em> (<code>sales_window()</code>), nên một cú nhảy đồng hồ không chỉ làm lệch mốc đồng bộ — nó chuyển doanh thu sang nhầm ngày, vĩnh viễn.</div>
+      </div>
+    </div>
+
+    <div class="blocker">
+      <div class="tag">Không quản được</div>
+      <h3>Không có gì ghi lại máy đang ở phiên bản schema nào</h3>
+      <div class="b">
+        <p>Schema nằm ở <b>hai chỗ</b>, không phải một. <code>database/database.sql</code> giữ phần khai báo, còn <code>database/db_core.py</code> giữ một loạt hàm <code>migrate_*()</code> viết bằng Python — và <b>một bảng chỉ tồn tại ở nửa sau</b>: <code>recipe_action</code>, nơi giữ các bước thao tác tay và clip minh hoạ; nó không có dòng <code>CREATE TABLE</code> nào trong <code>database.sql</code>. <code>python3 -m database.main update</code> chạy lại <em>tất cả</em>, mỗi lần, dựa vào tính idempotent của từng hàm.</p>
+        <p>Cách đó đúng và gọn với một máy: không có bảng ledger nào để lệch, và một máy cũ tự bắt kịp. Nhưng nó có nghĩa là <b>không nơi nào trong hệ thống trả lời được câu “máy này đang ở schema nào”</b>. Không phải khó tra — không tồn tại câu trả lời.</p>
+        <p>Ba chỗ trong chính thiết kế này cần câu trả lời đó. Quy tắc “mỗi bản chụp khai báo phiên bản schema tối thiểu nó cần, máy quá cũ thì từ chối áp” không có gì để so sánh. Lệnh <code>apply-release</code> không quyết định được có phải chạy migration hay không. Và <code>db_core.py</code> <em>tự nó</em> ghi rằng DDL trong MySQL không nằm trong transaction — nên một migration đứt giữa chừng vì mất điện để lại một schema nửa vời <b>không dấu vết</b>, và lần chạy sau sẽ đi qua nó mà không biết.</p>
+        <div class="fix"><strong>Cách sửa:</strong> một bảng <code>schema_migration(name PK, applied_at, checksum, duration_ms)</code>, mỗi migration một dòng, ghi <em>sau</em> khi nó thành công. <code>database.main update</code> ghi vào đó; nhịp tim báo tên migration mới nhất và tổng số dòng; Hub từ chối gửi bản chụp có <code>min_schema</code> cao hơn cái máy đang có, và <b>nói ra</b> thay vì đoán. Rẻ, làm được trước khi có Hub, và nó là điều kiện tiên quyết của pha 06.</div>
+      </div>
+    </div>
+
+    <div class="blocker">
+      <div class="tag">Hỏng âm thầm</div>
+      <h3>Không có bản sao lưu nào, ở đâu cả</h3>
+      <div class="b">
+        <p><code>grep -rn mysqldump</code> trên toàn bộ mã <code>.py</code> và <code>.sh</code> không trả về gì. Không có timer systemd, không có cron, không có pha nào trong <code>install.sh</code> làm việc đó. Những file <code>database/backup_before_*.sql</code> nằm trong repo là người gõ tay trước từng lần migration — một quy ước tốt, và nó chỉ chạy khi có người nhớ.</p>
+        <p>Điều này biến một ô trong bảng tình huống của bản 2 thành lời hứa suông. Ô <em>“Mất thẻ nhớ của máy → khôi phục được mọi thứ trừ QRPROTO_KEY”</em> <b>không đúng hôm nay</b>. Mất thẻ nhớ là mất: toàn bộ lịch sử bán hàng, mọi vé chưa quét, <code>error_log</code>, tài khoản và phân quyền, mức tồn kho, và cả hiệu chuẩn. Không phải mất khoá QR — mất tất cả.</p>
+        <p>Thẻ SD trên Pi chạy 24/7 với MySQL ghi liên tục không phải là thứ bền. Đây là lỗi chặn duy nhất trong năm cái mà thiệt hại của nó <em>không</em> lớn lên vì có đội máy — nó đã lớn hết cỡ sẵn rồi, ngay hôm nay, với một máy.</p>
+        <div class="fix"><strong>Cách sửa — theo hai bước, bước một không cần chờ Hub:</strong>
+          <br>1. Một <code>flexmix-backup.timer</code> chạy hằng đêm: <code>mysqldump --single-transaction</code> cộng <code>pump_calib.json</code>, <code>calib_loadcell.json</code>, <code>machine_profile.json</code>, đóng gói, giữ bảy bản gần nhất ra <b>một ổ khác</b> (USB, hoặc thẻ thứ hai). Cùng thẻ với bản gốc thì không phải là sao lưu.
+          <br>2. Khi có agent: đẩy gói đêm đó lên Hub, Hub giữ N bản mỗi máy và <b>cảnh báo khi bản mới nhất quá 36 giờ</b> — một sao lưu không ai kiểm tra là một sao lưu chưa tồn tại. Bước 05 của vòng đời (“Thay thế”) phải được diễn tập thật một lần trên một máy thử, không phải chỉ viết trong tài liệu.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Sơ đồ</div>
+    <h2>Cái gì đi qua ranh giới</h2>
+  </div>
+  <figure class="figure">
+    <svg viewBox="0 0 880 552" role="img" aria-label="Hub o tren, mot may o duoi, lan trai di xuong mang trang thai mong muon, lan phai di len mang su kien">
+      <defs>
+        <marker id="arrowdown" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" fill="var(--down)"/>
+        </marker>
+        <marker id="arrowup" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" fill="var(--up)"/>
+        </marker>
+      </defs>
+
+      <rect class="s-hub" x="40" y="14" width="800" height="106" rx="4"/>
+      <text class="t-title" x="62" y="44">FlexMix Hub</text>
+      <text class="t-sub" x="62" y="62">một VM · MySQL 8 · kho ảnh · Tailscale</text>
+      <rect class="s-chip" x="62" y="76" width="100" height="26" rx="3"/>
+      <text class="t-mono" x="75" y="93">thực đơn</text>
+      <rect class="s-chip" x="174" y="76" width="100" height="26" rx="3"/>
+      <text class="t-mono" x="187" y="93">tài khoản</text>
+      <rect class="s-chip" x="286" y="76" width="120" height="26" rx="3"/>
+      <text class="t-mono" x="299" y="93">bản phát hành</text>
+      <rect class="s-chip" x="418" y="76" width="150" height="26" rx="3"/>
+      <text class="t-mono" x="431" y="93">giám sát + cảnh báo</text>
+
+      <path class="l-down" d="M80 122 L80 352" marker-end="url(#arrowdown)"/>
+      <path class="l-up" d="M800 352 L800 122" marker-end="url(#arrowup)"/>
+
+      <text class="t-down" x="100" y="150">↓ trạng thái mong muốn</text>
+      <text class="t-mono" x="100" y="170">bản chụp có số phiên bản, máy tự kéo</text>
+      <text class="t-body" x="100" y="196">drink · recipe · recipe_action · ingredient</text>
+      <text class="t-body" x="100" y="216">store_setting · admin_user · role_permission</text>
+      <text class="t-body" x="100" y="236">ảnh + clip, định danh theo hash</text>
+      <text class="t-body" x="100" y="256">mã bản phát hành + migration cần chạy</text>
+      <text class="t-body" x="100" y="276">lệnh xếp hàng (có ack, chạy lại được)</text>
+
+      <text class="t-up" x="780" y="150" text-anchor="end">sự kiện ↑</text>
+      <text class="t-mono" x="780" y="170" text-anchor="end">quét theo mốc, máy tự đẩy</text>
+      <text class="t-body" x="780" y="196" text-anchor="end">dòng order_ticket (machine_id, serial)</text>
+      <text class="t-body" x="780" y="216" text-anchor="end">dòng error_log theo error_id</text>
+      <text class="t-body" x="780" y="236" text-anchor="end">tồn nguyên liệu + bản đồ khe cắm</text>
+      <text class="t-body" x="780" y="256" text-anchor="end">nhịp tim: phiên bản, schema, lệch giờ</text>
+      <text class="t-body" x="780" y="276" text-anchor="end">cờ bán được: chế độ test, order_mode</text>
+      <text class="t-body" x="780" y="296" text-anchor="end">gói sao lưu đêm + nhật ký thao tác</text>
+
+      <path class="l-dash" d="M40 312 L840 312"/>
+      <text class="t-sub" x="440" y="332" text-anchor="middle">HTTPS qua Tailscale · mTLS · luôn luôn là máy gọi ra</text>
+
+      <rect class="s-mach" x="40" y="352" width="800" height="152" rx="4"/>
+      <text class="t-title" x="62" y="382">Máy — MID do Hub cấp</text>
+      <text class="t-sub" x="62" y="400">QRPROTO_KEY riêng · MySQL beveragepos riêng · hiệu chuẩn riêng</text>
+
+      <rect class="s-chip" x="62" y="414" width="360" height="70" rx="3"/>
+      <text class="t-mono" x="76" y="434">flexmix-backend.service</text>
+      <text class="t-body" x="76" y="454">store :8080 · sync_menu · run_flow</text>
+      <text class="t-body" x="76" y="472">vẫn bán và pha khi mất Hub</text>
+
+      <rect class="s-chip" x="436" y="414" width="190" height="70" rx="3"/>
+      <text class="t-mono" x="450" y="434">flexmix-agent.service</text>
+      <text class="t-body" x="450" y="454">unit riêng — nó chết</text>
+      <text class="t-body" x="450" y="472">không kéo theo lần bán</text>
+
+      <rect class="s-chip" x="640" y="414" width="178" height="70" rx="3"/>
+      <text class="t-mono" x="654" y="434">MySQL</text>
+      <text class="t-body" x="654" y="454">bản sao thực đơn +</text>
+      <text class="t-body" x="654" y="472">vé do chính nó làm chủ</text>
+
+      <text class="t-sub" x="440" y="530" text-anchor="middle">không mở cổng nào vào máy — muốn vào tay thì đi Tailscale SSH, không đi qua ứng dụng</text>
+    </svg>
+    <figcaption>Hai làn, hai hình dạng. Đi xuống là một bản chụp trọn vẹn, máy áp trong một transaction; đi lên là một dòng chỉ thêm, máy gửi lại tới khi Hub xác nhận.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Phần bản đầu bỏ sót</div>
+    <h2>Năng lực của một máy</h2>
+  </div>
+  <div class="prose">
+    <p>Một Hub nắm thực đơn chung ngầm giả định mọi máy pha được mọi món. Không máy nào làm được thế. Máy có <strong>10 bơm và 16 vị trí panel</strong>, và giao thức QR áp thêm hai trần nữa. Bốn con số này quyết định thực đơn của một điểm bán trông như thế nào — chúng phải là dữ liệu Hub biết, không phải chuyện phát hiện ra khi khách bấm nút.</p>
+  </div>
+  <div class="ladder">
+    <div class="rung cap">
+      <div class="lab">Mã nguyên liệu khách chọn được<span>qrproto/constants.py · INGREDIENT_MAX</span></div>
+      <div class="bar"><i style="width:100%"></i></div>
+      <div class="num">24</div>
+    </div>
+    <div class="rung cap">
+      <div class="lab">Lựa chọn trong một đơn<span>qrproto/constants.py · MAX_PAIRS</span></div>
+      <div class="bar"><i style="width:50%"></i></div>
+      <div class="num">12</div>
+    </div>
+    <div class="rung phys">
+      <div class="lab">Vị trí panel tay trên máy<span>configuration/machine.py · PANEL_COUNT</span></div>
+      <div class="bar"><i style="width:66.7%"></i></div>
+      <div class="num">16</div>
+    </div>
+    <div class="rung phys">
+      <div class="lab">Bơm trên máy<span>configuration/machine.py · PUMP_GPIO</span></div>
+      <div class="bar"><i style="width:41.7%"></i></div>
+      <div class="num">10</div>
+    </div>
+  </div>
+  <div class="prose">
+    <p><strong>Trần 24 chỉ áp lên nguyên liệu khách chọn được.</strong> Đây là một điểm tinh tế đáng nói rõ, vì hiểu sai nó sẽ dẫn tới một cuộc đánh số lại không cần thiết. Payload QR <em>không</em> chứa nguyên liệu bơm thường — lượng gram của chúng lấy từ database qua SKU. Chỉ nguyên liệu có <code>data_type</code> là <code>boolean</code> (topping tích chọn) hoặc <code>percentage</code> (núm đường) mới xuất hiện trong payload dưới dạng opcode hai chữ số. Vậy quy tắc chính xác là:</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Ràng buộc</th><th>Áp lên</th><th>Vi phạm thì sao</th></tr></thead>
+      <tbody>
+        <tr><td>ingredient_id ≤ 24</td><td>Chỉ nguyên liệu <code>boolean</code> và <code>percentage</code></td><td><code>qrproto</code> ném lỗi lúc in nhãn — hỏng ồn ào, phát hiện ngay</td></tr>
+        <tr><td>≤ 12 lựa chọn / đơn</td><td>Một món có bao nhiêu topping + núm</td><td>Không mã hoá được payload; món đó không bán được</td></tr>
+        <tr><td>≤ 10 nguyên liệu PUMP</td><td>Máy này, lúc này</td><td>Không xếp được khe; món dùng nguyên liệu thứ 11 không pha được ở đây</td></tr>
+        <tr><td>≤ 16 nguyên liệu MANUAL</td><td>Máy này, lúc này</td><td>Như trên, với panel tay</td></tr>
+        <tr><td>≤ 9999 g một chỉ thị</td><td>Núm đường quy ra gram</td><td><code>WEIGHT_MAX_RAW</code> — thực tế không bao giờ chạm</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose">
+    <p><strong>Vùng mã 1–24 là một tài nguyên khan hiếm, và hôm nay không ai giữ chỗ cho nó.</strong> Đây là chỗ bản 2 dừng lại quá sớm. <code>ingredient_id</code> là <b>một</b> chuỗi <code>AUTO_INCREMENT</code> duy nhất, cấp cho mọi nguyên liệu: <code>migrate_id_ranges.sql</code> dời drink lên 1001–1999 và glass lên 3001–3999, nhưng cố ý để nguyên liệu ở 0001–0999. Nghĩa là <b>mỗi nguyên liệu bơm thường cũng tiêu một số trong vùng mà chỉ topping và núm mới dùng được</b>. Tiệm thêm 24 loại siro bơm, rồi thêm một topping mới: topping đó nhận id 25 và món chứa nó không in nổi nhãn.</p>
+    <p>Và <b>không có gì trong màn hình quản trị chặn việc đó</b>. Tìm khắp <code>admin_gui/serve.py</code> và <code>ingredients.js</code> không có một chỗ nào so với <code>INGREDIENT_MAX</code> hay <code>MAX_PAIRS</code>. Người quản lý lưu nguyên liệu thành công, gắn nó vào công thức thành công, thấy nó trên thực đơn — rồi <code>qrproto</code> ném lỗi <em>lúc khách bấm In</em>. “Hỏng ồn ào, phát hiện ngay” nghe như một điểm cộng cho tới khi bạn để ý chỗ nó ồn lên: <b>ở quầy, trước mặt khách, do một thao tác đã làm từ tuần trước</b>. Cùng chuyện với một món có 13 topping, và với nguyên liệu <code>PUMP</code> chưa khai cột <code>gpio</code> — <code>export_data.py</code> ném <code>ValueError</code> khi <em>quét</em>, tức là sau khi khách đã trả tiền.</p>
+    <p><strong>Cách sửa, và nó thuộc về Hub nhiều hơn thuộc về máy:</strong> tách hai vùng số ngay từ bây giờ — nguyên liệu <code>boolean</code>/<code>percentage</code> cấp từ 1–24, nguyên liệu <code>weight</code> cấp từ 100 trở lên; đổi <code>data_type</code> của một nguyên liệu sang <code>boolean</code> khi id của nó &gt; 24 thì <b>từ chối và nói vì sao</b>. Rồi thêm một bước <b>tiền kiểm tính bán được</b> chạy ở cả hai đầu: trình soạn công thức từ chối lưu một món không mã hoá nổi payload, và trình sinh bản chụp ở Hub từ chối phát hành nó. Đây chính là lập luận <code>sync_menu.py</code> đã viết ra cho chuyện khác — <em>“một POS chào bán Trân châu cho một món mà công thức không có Trân châu sẽ thu tiền cho thứ máy rồi sẽ lặng lẽ không thêm”</em> — áp vào chỗ khách chưa kịp trả tiền.</p>
+    <p><strong>Với Hub, thêm một việc bản 2 chưa nghĩ tới:</strong> bảng ánh xạ mã của bản 2 giải quyết được lúc <em>nhận</em> một máy có sẵn, nhưng không giải quyết lúc <em>cấp mã mới</em>. Hub thêm một topping cho một máy đã dùng hết 24 mã thì không có chỗ để đặt nó. Nên bảng ánh xạ phải là một <b>bộ cấp phát theo từng máy</b>, không phải một bảng tra cứu tĩnh: Hub biết mã nào của máy nào còn trống, cấp mã trống thấp nhất, và khi không còn mã nào thì <b>báo cho người vận hành</b> rằng máy này không nhận thêm được lựa chọn nào nữa — trước khi phát hành, không phải lúc in nhãn.</p>
+  </div>
+  <div class="prose">
+    <p><strong>Hệ quả cho thiết kế:</strong> Hub phải giữ <em>bản đồ khe cắm</em> của từng máy — nguyên liệu nào đang ở bơm nào, ở vị trí panel nào — và từ đó tự tính ra <strong>tập món máy đó pha được</strong>. Bản đồ khe cắm do máy làm chủ và báo lên (nó là chuyện đi dây); tập món pha được là Hub tính và gửi xuống trong bản chụp.</p>
+    <p>Điều này thêm một trạng thái thứ ba cho một món, bên cạnh hai cái đã có. Ba trạng thái này khác nhau và màn hình phải nói khác nhau, vì cách xử lý của nhân viên khác hẳn:</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Trạng thái</th><th>Nghĩa</th><th>Ai đặt</th><th>Nhân viên làm gì</th></tr></thead>
+      <tbody>
+        <tr><td>không pha được ở đây <span class="mono">(mới)</span></td><td>Máy không có khe cho nguyên liệu của món</td><td>Hub tính từ bản đồ khe cắm</td><td>Không làm gì được — phải đổi cách đi dây</td></tr>
+        <tr><td>drink.available</td><td>“Hôm nay tiệm không bán món này”</td><td>Nhân viên tại quầy</td><td>Bật lại khi muốn bán</td></tr>
+        <tr><td>drink.in_stock</td><td>Một nguyên liệu dưới ngưỡng</td><td>Trigger MySQL tự tính</td><td>Châm thêm nguyên liệu</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note"><b>Món không pha được ở đây thì đừng gửi xuống.</b> Bản chụp lọc chúng ra từ Hub thay vì gửi xuống rồi để máy ẩn đi. Lý do giống hệt lý do <code>sync_menu.py</code> dựng tuỳ chọn của mỗi món từ chính công thức của nó: <em>“một POS chào bán Trân châu cho một món mà công thức không có Trân châu sẽ thu tiền cho thứ máy rồi sẽ lặng lẽ không thêm.”</em> Cùng một lỗi, ở cấp đội máy.</div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Phần nguy hiểm nhất của việc chuyển đổi</div>
+    <h2>Vùng tên nguyên liệu, và những tờ nhãn đang nằm trong túi khách</h2>
+  </div>
+  <div class="prose">
+    <p>Hub phải cấp id để hai máy không cùng sinh ra <code>drink 1004</code> cho hai món khác nhau. Nhưng với <code>ingredient</code> thì việc đánh số lại không phải chuyện nội bộ database — <strong>mã nguyên liệu được in vào QR</strong>, dưới dạng opcode hai chữ số. Một tờ nhãn in lúc 9 giờ sáng nói <em>“nguyên liệu 07, boolean, có”</em>. Nếu 10 giờ Hub đổi id của Trân châu từ 7 thành 12 và gán 7 cho Thạch, thì tờ nhãn đó — vẫn còn hạn, khách vẫn cầm trong tay — giờ gọi món có thêm Thạch.</p>
+    <p>Không có kiểm tra nào bắt được. CRC vẫn đúng, giải mã vẫn thành công, MID vẫn khớp, TS vẫn tươi. Máy pha ra một ly khác với ly khách trả tiền, và không dòng log nào biết.</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Quy tắc</th><th>Nội dung</th></tr></thead>
+      <tbody>
+        <tr><td>Không đánh số lại</td><td>Mã nguyên liệu đang dùng <b>không bao giờ</b> được đổi, kể cả lúc gộp danh mục. Hub nhận mã hiện có làm mã chuẩn.</td></tr>
+        <tr><td>Không tái dùng</td><td>Một mã đã ngừng dùng bị <b>giữ chỗ vĩnh viễn</b>, không cấp lại cho nguyên liệu khác. Trần 24 là trần của số mã từng cấp, không phải số nguyên liệu đang hoạt động.</td></tr>
+        <tr><td>Gộp thì gộp tên</td><td>Hai máy đều có “Siro đào” ở hai mã khác nhau: giữ cả hai mã, trỏ chúng về cùng một <em>nguyên liệu chuẩn</em> ở Hub. Máy vẫn dùng mã của mình.</td></tr>
+        <tr><td>Cửa sổ yên tĩnh</td><td>Mọi thay đổi chạm vào mã nguyên liệu chỉ áp sau khi <b>không còn vé nào chưa quét</b>, hoặc sau 24 giờ kể từ tờ nhãn cuối — lấy mốc nào đến sau.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose">
+    <p><strong>Cùng một vấn đề, ở mức nhẹ hơn, với công thức.</strong> <code>qr_to_recipe.py</code> dựng lại công thức từ database <em>tại thời điểm quét</em>, không phải lúc in — QR chỉ mang SKU và lựa chọn của khách. Nên một bản chụp thay đổi công thức sẽ thay đổi cả những ly đã bán mà chưa quét. Chú thích trong <code>order_ticket</code> đã lường trước điều này và đó chính là lý do vé có hạn 24 giờ, nhưng với Hub thì tần suất thay đổi công thức tăng vọt.</p>
+    <p>Ba cách xử lý, tôi khuyên cách thứ ba:</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Cách</th><th>Đánh đổi</th></tr></thead>
+      <tbody>
+        <tr><td>Chấp nhận</td><td>Rẻ nhất, và là hành vi hiện tại. Hỏng khi có người sửa công thức lúc 15 giờ chiều đông khách.</td></tr>
+        <tr><td>Ghim công thức vào vé</td><td>Đúng nhất, nhưng phải lưu cả công thức đã biên dịch vào <code>order_ticket</code> — một cột mới khá lớn và một migration nặng.</td></tr>
+        <tr><td><b>Áp lúc yên tĩnh</b></td><td>Agent giữ bản chụp mới và chỉ áp khi không còn vé <code>unused</code> nào và máy đang rảnh. Không cần đổi schema; chậm nhất là 24 giờ vì vé tự hết hạn. Đây là cách hợp với hình dạng hệ thống hiện có.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note"><b>Giá thì ngược lại — không cần chờ.</b> <code>order_ticket.price</code> và <code>drink_name</code> đã được sao vào vé lúc bán, đúng như chú thích trong schema giải thích: <em>“một báo cáo tính lại doanh thu tháng trước theo giá tháng này thì không ghi chép cái gì cả.”</em> Nên đổi giá áp được ngay, an toàn. Chỉ công thức và mã nguyên liệu mới cần cửa sổ yên tĩnh.</div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Mảng bản 2 không chạm tới</div>
+    <h2>Tiền, vé, và tồn kho</h2>
+  </div>
+  <div class="prose">
+    <p>Bản 2 nói rất kỹ về thực đơn đi xuống và sự kiện đi lên, nhưng nó chưa hỏi một câu mà bất kỳ ai vận hành ba mươi máy cũng sẽ hỏi trong tuần đầu: <b>con số doanh thu Hub hiển thị nghĩa là gì?</b> Câu trả lời phải đọc ra từ mã, và nó có vài chỗ bất ngờ.</p>
+    <p><strong>Không có mô-đun thanh toán nào trong hệ thống này.</strong> Không có bảng thanh toán, không có cổng thanh toán, không có tiền mặt. Việc thu tiền diễn ra ngoài phần mềm. Cái phần mềm ghi lại là một <em>vé</em>, và “doanh thu” là một truy vấn trên bảng vé.</p>
+    <p><strong>Doanh thu = những vé đã pha xong.</strong> <code>sales_window()</code> lọc <code>t.status = 'used'</code> và <code>completed_at</code> trong khoảng. Nghĩa là một nhãn đã in, khách đã trả tiền, rồi khách bỏ đi không quét — <b>không bao giờ vào doanh thu</b>. Nó nằm mãi ở <code>unused</code>, rồi <code>expired</code> sau 24 giờ, và không xuất hiện ở cả cột “bán” lẫn cột “hỏng”. Với một tiệm và một người chủ đứng đó thì không ai để ý. Với ba mươi máy, đó là một lỗ mà không bảng điều khiển nào cho thấy trừ khi bạn cố ý đo nó.</p>
+  </div>
+  <div class="note"><b>Đề xuất chỉ số hạng nhất:</b> <em>vé phát hành nhưng chưa từng được quét</em>, theo máy, theo ngày. Nó là một chỉ dấu duy nhất bắt được ba chuyện rất khác nhau — máy in nhả nhãn mờ, máy quét hỏng, hoặc có người thu tiền mà không giao hàng — và không chỉ số nào khác trong hệ này nhìn thấy chúng. Nó rẻ: đếm dòng <code>unused</code> + <code>expired</code>, dữ liệu đã có sẵn.</div>
+  <div class="prose">
+    <p><strong>Giá trên màn hình và giá vào sổ là hai đường khác nhau, và màn hình cố ý đi chậm hơn.</strong> Màn hình bán hàng hiển thị giá từ <code>store_gui/menu-data.js</code>. Khi bản trên đĩa đổi, <code>checkMenuFreshness()</code> nhận ra trong 5 giây — <b>rồi cố tình không áp</b>, cho tới khi <code>screenIsIdle()</code> đúng, tức là tới khi khách đã đặt xong. Chú thích trong <code>drinks-pos.js</code> nói rõ vì sao, và lý do đó đúng: <em>“xoá một đơn đang xây dở vì tồn kho ở đâu đó nhích xuống thì còn tệ hơn là hiện một thực đơn cũ vài phút.”</em></p>
+    <p>Nhưng <code>order_ticket.issue()</code> ghi giá bằng <code>INSERT ... SELECT price FROM drink</code> — đọc bảng <code>drink</code> <em>tại chính khoảnh khắc bấm In</em>. Ghép hai điều đó lại: <b>màn hình được thiết kế để giữ giá cũ suốt lúc khách chọn món, còn sổ sách được thiết kế để lấy giá mới lúc khách trả tiền.</b> Cửa sổ lệch không phải vài giây — nó dài đúng bằng thời gian một khách đứng chọn.</p>
+    <p>Hôm nay hiếm khi có ai đứng trong cửa sổ đó, vì đổi giá là việc một người làm vài lần một tháng ngay tại máy. <b>Với Hub thì nó thành thường trực</b>: một bản chụp có thể đổi giá bất cứ lúc nào, kể cả lúc một khách đang chọn món. Và bản 2 <em>khuyến khích</em> đúng điều đó — “đổi giá áp được ngay, an toàn” — dựa trên lập luận đúng rằng <code>order_ticket.price</code> đã chụp lại giá lúc bán. Lập luận đó đúng cho <em>báo cáo</em>; nó không đúng cho <em>người đang đứng ở quầy</em>.</p>
+    <p><strong>Cách sửa, và nó nhỏ:</strong> màn hình gửi kèm phiên bản thực đơn nó đang hiển thị và giá nó đang cho khách xem trong <code>POST /api/ticket</code>; máy chủ so, lệch thì trả 409 kèm giá mới và màn hình báo lại giá cho khách trước khi in. Không thêm bảng, không thêm cột. Đây là thứ biến “đổi giá áp được ngay” từ một lời hứa thành một câu đúng.</p>
+    <p><strong>Vé không phải là đặt chỗ tồn kho, và không có gì giả vờ nó là.</strong> Tồn kho chỉ bị trừ khi ly đã pha xong (<code>consume_inventory</code>) hoặc khi đơn hỏng giữa chừng (<code>charge_for_failed_order</code>). <code>issue()</code> không đọc <code>in_stock</code>, không đọc <code>available</code>, không giữ chỗ gì cả. Nên trong mười phút đông khách, máy in ra mười nhãn cho một món chỉ còn nguyên liệu cho hai ly. Tám khách đã trả tiền sẽ dừng lại ở bước pha.</p>
+  </div>
+  <div class="note"><b>Vì sao điều này quan trọng với Hub hơn là với một máy.</b> Cảnh báo <em>“tỉ lệ pha hỏng &gt; 10%”</em> ở bảng dưới sẽ nổ, và người trực sẽ đi tìm một cái bơm hỏng — trong khi chuyện thật sự xảy ra là quầy bán quá tay. Hai nguyên nhân, một triệu chứng, và người trực ở cách đó 200 km. Nên <code>error_log</code> phải nói được sự khác nhau đó thành lời (<em>“hết nguyên liệu”</em> ≠ <em>“bơm không ra đủ”</em>), và Hub phải tách chúng thành hai cảnh báo với hai việc cần làm khác nhau.</div>
+  <div class="prose">
+    <p><strong>Ba cách xử lý, tôi khuyên cách thứ nhất</strong> — nó đóng được phần lớn khoảng trống với vài dòng mã: <code>issue()</code> đọc <code>available</code> và <code>in_stock</code> trong cùng câu <code>INSERT ... SELECT</code> đang có và từ chối khi món đã tắt hoặc hết nguyên liệu. Cách thứ hai, trừ tạm lúc phát hành và hoàn lại khi vé hết hạn, đúng hơn nhưng thêm một đường tiền và một công việc dọn dẹp. Cách thứ ba là để nguyên và chấp nhận — chọn được, nhưng phải chọn có ý thức, vì hôm nay nó là mặc định do không ai quyết.</p>
+    <p><strong>Nhãn đã in vẫn pha món đã tắt bán, nhưng không pha nổi món đã xoá.</strong> <code>build_recipe_for_sku()</code> dựng lại công thức với <code>WHERE drink.deleted_at IS NULL</code> và <b>không</b> đọc <code>available</code> hay <code>in_stock</code>. Hai hệ quả trái ngược nhau, và cả hai đều là quyết định thiết kế chứ không phải tai nạn — chỉ là chưa ai viết chúng ra:</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Nhãn đã in, rồi ở Hub có người…</th><th>Máy làm gì khi quét</th><th>Đúng hay sai</th></tr></thead>
+      <tbody>
+        <tr><td>tắt <code>available</code> (“hôm nay không bán”)</td><td>Vẫn pha bình thường</td><td><b>Đúng.</b> Khách đã trả tiền cho tờ giấy đó.</td></tr>
+        <tr><td>đổi giá</td><td>Vẫn pha; sổ sách giữ giá lúc bán</td><td><b>Đúng.</b> Đây là lý do <code>order_ticket.price</code> tồn tại.</td></tr>
+        <tr><td>sửa công thức</td><td>Pha theo công thức <em>mới</em></td><td><b>Sai.</b> Cửa sổ yên tĩnh của bản 2 là để trị việc này.</td></tr>
+        <tr><td>xoá món vào thùng rác</td><td>Từ chối: <em>“SKU 0007 không có công thức nào trong database”</em></td><td><b>Sai hai lần.</b> Xem dưới.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose">
+    <p>Hàng cuối sai hai lần. Sai thứ nhất: xoá một món <b>làm hỏng ngay lập tức</b> mọi nhãn của nó đang nằm trong túi khách — cùng loại thiệt hại như sửa công thức, nên nó phải đi qua cùng một <b>cửa sổ yên tĩnh</b>, và bản 2 chưa xếp <code>deleted_at</code> vào nhóm đó. Sai thứ hai nhỏ hơn nhưng khó chịu hơn với người đứng quầy: câu từ chối đó đọc như <em>máy hỏng</em>, nó được <code>record_error()</code> ghi vào <code>error_log</code> như một sự cố máy, và nó sẽ kéo cảnh báo “tỉ lệ pha hỏng” của Hub lên. Một món bị rút khỏi thực đơn phải trả lời bằng một lời từ chối lịch sự — <em>“món này đã ngừng bán, mời quý khách ra quầy”</em> — và <b>không</b> ghi vào nhật ký sự cố.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Bước khó nhất, chỉ làm một lần cho mỗi máy</div>
+    <h2>Nhận một máy đang chạy vào đội</h2>
+  </div>
+  <div class="prose">
+    <p>Máy đang chạy đã có danh mục riêng, id riêng, và một lịch sử bán hàng. Hub cũng có danh mục của nó. Lần đồng bộ đầu tiên là lần duy nhất hai bên thật sự có thể mâu thuẫn, nên nó không được là một lần đồng bộ — nó là một quy trình riêng, có người xem lại và bấm duyệt.</p>
+  </div>
+  <div class="pair">
+    <div class="flowcard down">
+      <h3><span class="arrow">→</span> Máy đầu tiên</h3>
+      <ol class="steps">
+        <li>Agent đẩy toàn bộ danh mục hiện có của máy lên Hub dưới dạng <em>đề xuất</em>, không phải dữ liệu thật.</li>
+        <li>Hub nhận nguyên trạng — mọi id giữ nguyên. Danh mục của máy này <b>trở thành</b> danh mục chuẩn của đội.</li>
+        <li>Từ đó Hub cấp id mới bắt đầu từ số lớn nhất đang có.</li>
+      </ol>
+    </div>
+    <div class="flowcard up">
+      <h3><span class="arrow">→</span> Mỗi máy sau đó</h3>
+      <ol class="steps">
+        <li>Agent đẩy danh mục của máy lên. Hub so khớp <b>theo tên</b>, không theo id.</li>
+        <li>Hub dựng một bảng đối chiếu và <b>dừng lại</b>: một người phải xem từng dòng — trùng tên khác nghĩa, khác tên cùng nghĩa, món chỉ máy này có.</li>
+        <li>Duyệt xong, Hub sinh một <em>bảng ánh xạ mã riêng cho máy này</em>: mã cũ của máy ↔ nguyên liệu chuẩn. Máy giữ nguyên mã của nó.</li>
+        <li>Vé và nhật ký lỗi cũ được đẩy lên nguyên trạng, gắn kèm MID. Không sửa gì trong quá khứ.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="note"><b>Vì sao máy giữ mã cũ thay vì nhận mã của Hub.</b> Vì lý do ở mục trên: đổi mã là làm hỏng nhãn đang lưu hành. Bảng ánh xạ nằm ở Hub, không nằm ở máy — máy không cần biết nó tồn tại, và đó là điều làm cho việc nhận máy vào đội không đụng đến một dòng nào của đường bán hàng.</div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Cốt lõi</div>
+    <h2>Ai làm chủ cái gì</h2>
+  </div>
+  <div class="prose">
+    <p>Gần như mọi hỏng hóc trong hệ nhiều máy đều đến từ hai bên cùng tin mình làm chủ một dòng. Chia quyền sở hữu <em>trước khi</em> viết mã đồng bộ, và chia theo <strong>từng cột</strong> ở bảng có hai chủ.</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Dữ liệu</th><th>Chủ sở hữu</th><th>Chiều</th><th>Vì sao nằm ở đó</th></tr></thead>
+      <tbody>
+        <tr><td>drink, recipe, glass, drink_type, category</td><td>Hub</td><td><span class="dir d-down"><b>↓</b> thay thế</span></td><td>Một công thức, sửa một lần. Đây là lý do tồn tại của Hub.</td></tr>
+        <tr><td>recipe_action <span class="mono">(bản 2 bỏ sót)</span></td><td>Hub</td><td><span class="dir d-down"><b>↓</b> thay thế</span></td><td>Các bước thao tác tay — lắc, khuấy, trang trí — cùng <code>media_src</code> và <code>cup_returns</code>. Xếp số chung một dãy <code>step_no</code> với công thức bơm, nên nó <b>phải</b> đi cùng transaction với <code>recipe</code>, không phải một lượt riêng.</td></tr>
+        <tr><td>drink_category_mapping <span class="mono">(bản 2 bỏ sót)</span></td><td>Hub</td><td><span class="dir d-down"><b>↓</b> thay thế</span></td><td>Món thuộc danh mục nào. Báo cáo lọc theo nó, nên hai máy hiểu khác nhau là hai báo cáo không cộng được.</td></tr>
+        <tr><td>drink.deleted_at <span class="mono">(bản 2 bỏ sót)</span></td><td>Hub</td><td><span class="dir d-down"><b>↓</b> thay thế</span></td><td>Bia mộ, không phải xoá. Đi qua <b>cửa sổ yên tĩnh</b> như công thức: rút một món là làm hỏng ngay mọi nhãn của nó đang lưu hành. Xem mục Tiền, vé, và tồn kho.</td></tr>
+        <tr><td>ingredient — id, name, type, data_type</td><td>Hub</td><td><span class="dir d-down"><b>↓</b> thay thế</span></td><td>Qua bảng ánh xạ mã theo máy. Id trên máy không bao giờ bị viết lại.</td></tr>
+        <tr><td>ingredient — amount, in_stock, max_gram</td><td>Máy</td><td><span class="dir d-up"><b>↑</b> báo lên</span></td><td>Chai thật trong máy thật. Hub được đọc, không được ghi.</td></tr>
+        <tr><td>ingredient — threshold_gram <span class="mono">(sửa so với bản 2)</span></td><td>Dẫn xuất</td><td><span class="dir d-hold"><b>⊘</b> tính lại</span></td><td>Bản 2 xếp nhầm cột này vào nhóm máy làm chủ. <code>recalculate_thresholds()</code> đặt nó bằng <b>110% lượng dùng lớn nhất trong mọi công thức</b> — mà công thức là của Hub. Nên nó phải được <em>tính lại sau khi áp bản chụp</em>, giống <code>in_stock</code>, chứ không phải đồng bộ.</td></tr>
+        <tr><td>ingredient — gpio (<code>G26</code> / <code>P01</code>)</td><td>Máy</td><td><span class="dir d-up"><b>↑</b> báo lên</span></td><td>Bản đồ khe cắm. Hub cần nó để tính tập món pha được — nhưng chỉ đọc.</td></tr>
+        <tr><td>drink.published <span class="mono">(cột mới)</span></td><td>Hub</td><td><span class="dir d-down"><b>↓</b> thay thế</span></td><td>“Món này thuộc thực đơn điểm bán này.” Tách khỏi <code>available</code> để hai bên không giành nhau.</td></tr>
+        <tr><td>drink.available</td><td>Máy</td><td><span class="dir d-up"><b>↑</b> báo lên</span></td><td>“Hôm nay tiệm không bán.” Quyết định của người đứng tại quầy.</td></tr>
+        <tr><td>drink.in_stock</td><td>Trigger MySQL</td><td><span class="dir d-hold"><b>⊘</b> tính lại</span></td><td>Đã dẫn xuất từ tồn kho tại máy. Đừng đồng bộ — tính lại.</td></tr>
+        <tr><td>store_setting</td><td>Hub, ghi đè theo điểm</td><td><span class="dir d-down"><b>↓</b> gộp</span></td><td>Giải theo máy ⊃ điểm bán ⊃ đội, Hub gửi xuống kết quả đã giải.</td></tr>
+        <tr><td>admin_user, role_permission</td><td>Hub</td><td><span class="dir d-down"><b>↓</b> thay thế</span></td><td>hash/salt/rounds đi nguyên trạng; PBKDF2 nghĩa là không có mật khẩu thô qua đường truyền.</td></tr>
+        <tr><td>order_ticket</td><td>Máy</td><td><span class="dir d-up"><b>↑</b> nối thêm</span></td><td>Nhận vé là một UPDATE nguyên tử tại chỗ. Không phân xử từ xa được.</td></tr>
+        <tr><td>error_log</td><td>Máy</td><td><span class="dir d-up"><b>↑</b> nối thêm</span></td><td>Bằng chứng. Gửi theo mốc <code>error_id</code>; Hub giữ vĩnh viễn, máy được dọn bớt.</td></tr>
+        <tr><td>order_ticket.note</td><td>Máy</td><td><span class="dir d-hold"><b>⊘</b> không bao giờ</span></td><td>Chữ khách tự gõ. Ở lại máy; lấy được qua <code>collect-diagnostics</code> khi có khiếu nại. Xem mục Ghi chú của khách.</td></tr>
+        <tr><td>schema_migration <span class="mono">(bảng mới)</span></td><td>Máy</td><td><span class="dir d-up"><b>↑</b> báo lên</span></td><td>Máy đang ở schema nào. Hôm nay <b>không tồn tại</b> — xem lỗi chặn thứ tư. Hub chỉ đọc, và dùng nó để từ chối một bản chụp máy chưa đọc nổi.</td></tr>
+        <tr><td>Gói sao lưu đêm <span class="mono">(mới)</span></td><td>Máy</td><td><span class="dir d-up"><b>↑</b> sao lưu</span></td><td><code>mysqldump</code> + hiệu chuẩn + profile. Xem lỗi chặn thứ năm. Hub cảnh báo khi gói mới nhất quá 36 giờ.</td></tr>
+        <tr><td>Nhật ký thao tác <span class="mono">(bảng mới)</span></td><td>Máy ghi, Hub gộp</td><td><span class="dir d-up"><b>↑</b> nối thêm</span></td><td>Ai đổi giá, ai châm nguyên liệu, ai in lại vé. Hôm nay <b>không có gì</b> ghi lại — xem mục Nhật ký thao tác.</td></tr>
+        <tr><td>pump_calib.json, calib_loadcell.json</td><td>Máy</td><td><span class="dir d-up"><b>↑</b> sao lưu</span></td><td>Sau khi gỡ khỏi git. Hub giữ để khôi phục khi thẻ nhớ chết — chỉ vậy.</td></tr>
+        <tr><td>machine_profile.json <span class="mono">(file mới)</span></td><td>Máy</td><td><span class="dir d-up"><b>↑</b> sao lưu</span></td><td>Phần riêng của máy tách khỏi <code>machine.py</code>: PUMP_GPIO, I2C, tên máy in.</td></tr>
+        <tr><td>order_mode.json, display_mode.json</td><td>Hub đặt được</td><td><span class="dir d-down"><b>↓</b> lệnh</span></td><td>Gửi dạng lệnh, máy tự áp, giữ nguyên tự hoàn tác 20 giây của độ phân giải.</td></tr>
+        <tr><td>recipe/image, recipe/media</td><td>Hub</td><td><span class="dir d-down"><b>↓</b> tải về</span></td><td>Định danh theo hash nên clip 12 MB tải một lần, không tải lại.</td></tr>
+        <tr><td>store_gui/menu-data.js</td><td>Dẫn xuất</td><td><span class="dir d-hold"><b>⊘</b> dựng lại</span></td><td><code>sync_menu</code> dựng nó từ MySQL mỗi phút. <b>Không bao giờ</b> đồng bộ file này — áp bản chụp xong thì chạy <code>sync_menu</code> một lượt, đúng như bản 2 đã mô tả ở luồng đi xuống.</td></tr>
+        <tr><td>QRPROTO_KEY, admin_account.json</td><td>Máy</td><td><span class="dir d-hold"><b>⊘</b> không bao giờ</span></td><td>Bí mật riêng của máy. Gom về Hub là thay đổi duy nhất khiến cả đội kém an toàn hơn từng máy hôm nay.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Cơ chế</div>
+    <h2>Hai luồng, cố ý khác hình dạng</h2>
+  </div>
+  <div class="pair">
+    <div class="flowcard down">
+      <h3><span class="arrow">↓</span> Trạng thái mong muốn</h3>
+      <p style="font-size:13.5px;color:var(--ink-2)">Một bản chụp trọn vẹn có số phiên bản, không phải dòng thay đổi. Danh mục rất nhỏ nên vài trăm KB JSON rẻ hơn đống lỗi mà đồng bộ tăng dần mang lại — và đó đúng là lối <code>sync_menu.py</code> đang dùng: dựng lại từ đầu, mỗi lần.</p>
+      <ol class="steps">
+        <li>Agent hỏi <code>GET /v1/state?have=847</code>. Hub trả <code>304</code> hoặc bản chụp 848, <b>đã lọc theo năng lực của máy này</b>.</li>
+        <li>Agent kiểm chữ ký và hash tệp đính kèm, tải ảnh/clip còn thiếu.</li>
+        <li>Nếu bản chụp chạm vào công thức hoặc mã nguyên liệu: <b>giữ lại, chờ cửa sổ yên tĩnh</b>. Nếu chỉ đổi giá, tên, ảnh: áp ngay.</li>
+        <li>Áp vào MySQL trong <b>một transaction</b>: chỉ upsert dòng và cột Hub làm chủ.</li>
+        <li>Ghi phiên bản đã áp, chạy <code>sync_menu</code> một lần. Áp lỗi thì rollback trọn vẹn, máy bán tiếp thực đơn cũ và báo lên.</li>
+      </ol>
+    </div>
+    <div class="flowcard up">
+      <h3><span class="arrow">↑</span> Sự kiện</h3>
+      <p style="font-size:13.5px;color:var(--ink-2)">Không ghi bảng outbox trên đường bán hàng — một lần bán không được chậm đi hay hỏng vì một bảng đồng bộ bị khoá. Agent <em>quét</em> chính những bảng máy vẫn ghi, theo mốc, trong tiến trình riêng.</p>
+      <ol class="steps">
+        <li><code>error_log</code> quét theo <code>error_id</code>; bảng chỉ nối thêm nên mốc chính xác tuyệt đối.</li>
+        <li><code>order_ticket</code> có đổi trạng thái, nên thêm <code>updated_at DATETIME(3) ON UPDATE CURRENT_TIMESTAMP(3)</code> kèm index và quét theo cột đó với khoảng chồng lấn nhỏ.</li>
+        <li>Hub upsert theo <b>(machine_id, serial)</b>. Serial trùng giữa các máy là đương nhiên — đừng đánh số lại, chúng đã in trên giấy.</li>
+        <li>Tồn kho, bản đồ khe cắm, sức khoẻ đi lên dạng ảnh chụp định kỳ: chỉ cần giá trị hiện tại.</li>
+        <li>Mốc chỉ tiến khi nhận <code>200</code>. Giao ít nhất một lần, ghi lặp vô hại; mất điện không mất dữ liệu.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="note"><b>Vì sao agent là systemd unit riêng.</b> <code>main.py</code> cố ý để thread nào chết là <code>os._exit(1)</code> giết cả tiến trình, cho <code>Restart=always</code> kích hoạt. Đúng với ba thread phải cùng sống mới bán được nước. Sai với một client mạng: lỗi trong agent sẽ khiến vòng pha chế khởi động lại mỗi lần Hub có chuyện.</div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Phần bản 2 mô tả bằng lời mà chưa vẽ ra hình</div>
+    <h2>Hợp đồng dữ liệu trên dây</h2>
+  </div>
+  <div class="prose">
+    <p>Bản 2 tả đúng <em>hình dạng</em> của hai làn — xuống là bản chụp trọn vẹn, lên là dòng chỉ thêm. Nhưng người viết Hub và người viết agent không dựng được cùng một thứ từ một đoạn văn xuôi. Bốn gói tin dưới đây là toàn bộ bề mặt tiếp xúc; nếu chúng đúng thì hai bên viết độc lập được, và <b>máy giả</b> ở mục kiểm thử chỉ cần biết bốn cái này.</p>
+    <p><strong>Quy tắc số không: mọi mốc thời gian qua ranh giới là UTC.</strong> Máy hôm nay dùng giờ địa phương ở khắp nơi — <code>now_text()</code> trả <code>datetime.now().astimezone()</code>, và cột <code>DATETIME</code> của MySQL không mang múi giờ nào cả. Điều đó đúng cho một máy trong một tiệm. Qua dây thì không: Hub gộp nhiều máy, và một cột không mang múi giờ là một cột không cộng được. Nên gói tin dùng UTC ISO-8601, <b>và mỗi máy khai múi giờ của nó trong nhịp tim</b> — Hub cần cả hai để dựng lại “doanh thu ngày 09/09 của tiệm này” cho đúng.</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Gói</th><th>Mang gì</th><th>Điều dễ làm sai nhất</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>Bản chụp</b><br><span class="mono">↓ GET /v1/state</span></td>
+          <td><code>contract</code>, <code>version</code>, <code>min_schema</code>, <code>generated_at</code>, <code>machine_id</code>, khối danh mục đã lọc theo năng lực máy, <code>assets[]</code> (đường dẫn + sha256 + số byte), và <code>signature</code>.</td>
+          <td><b>Quên <code>min_schema</code>.</b> Không có nó, một máy cũ sẽ áp một bản chụp nó không hiểu và hỏng <em>im lặng</em>. Máy phải từ chối và báo lên, không đoán. Đây là chỗ lỗi chặn thứ tư trả nợ.</td>
+        </tr>
+        <tr>
+          <td><b>Lô sự kiện</b><br><span class="mono">↑ POST /v1/events</span></td>
+          <td><code>machine_id</code>, <code>kind</code> (<code>ticket</code> / <code>error</code> / <code>audit</code>), <code>cursor_from</code>, <code>rows[]</code>, <code>cursor_to</code>.</td>
+          <td><b>Tiến mốc trước khi Hub xác nhận.</b> Mốc chỉ được tiến khi nhận 200 <em>và</em> Hub trả về đúng <code>cursor_to</code> nó đã ghi. Giao ít nhất một lần; Hub upsert theo <code>(machine_id, serial)</code> nên ghi lặp vô hại — đó chính là cái làm cho “chỉ tiến khi 200” an toàn.</td>
+        </tr>
+        <tr>
+          <td><b>Nhịp tim</b><br><span class="mono">↑ POST /v1/beat</span></td>
+          <td>Xem danh sách bên dưới.</td>
+          <td><b>Chỉ báo cái đang sống.</b> Một nhịp tim nói “tiến trình còn chạy” không đủ — nửa số cảnh báo đáng giá nhất đo <em>máy khoẻ mà không bán được</em>.</td>
+        </tr>
+        <tr>
+          <td><b>Lệnh</b><br><span class="mono">↓ hàng đợi · ↑ ack</span></td>
+          <td><code>id</code>, <code>kind</code>, <code>args</code>, <code>issued_by</code>, <code>issued_at</code>, <code>expires_at</code>. Ack trả <code>id</code> + <code>accepted</code> / <code>refused</code> / <code>done</code> / <code>failed</code> + một câu.</td>
+          <td><b>Quên <code>expires_at</code>.</b> Một lệnh <code>restart-backend</code> nằm chờ trong hàng đợi ba ngày rồi nổ giữa giờ đông khách còn tệ hơn là không có lệnh nào. Lệnh quá hạn thì máy bỏ và ack là <code>refused</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose">
+    <p><strong>Nhịp tim mang gì.</strong> Danh sách này được rút ngược từ bảng cảnh báo — mỗi trường ở đây tồn tại vì có đúng một cảnh báo cần nó, và trường nào không nuôi cảnh báo nào thì không nên có:</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Nhóm</th><th>Trường</th></tr></thead>
+      <tbody>
+        <tr><td>Danh tính &amp; phiên bản</td><td>tag mã đang chạy · bản chụp đã áp · migration mới nhất + tổng số · <code>contract</code> agent nói được</td></tr>
+        <tr><td>Sức khoẻ máy</td><td>uptime · nhiệt độ CPU · đĩa trống % · RAM · <code>CmaFree</code> · số lần kiosk dựng lại trong giờ qua</td></tr>
+        <tr><td>Thời gian</td><td>độ lệch NTP (giây) · múi giờ của máy · <code>time-sync</code> đã đạt hay chưa</td></tr>
+        <tr><td><b>Bán được hay không</b></td><td>chế độ test đang bật? · <code>order_mode</code> (printQR/runDirect) · cổng runner đang mở? (tức là đang pha) · tuổi đơn đang mở · số vé phát hành trong 60 phút qua · máy in trả lời không · máy quét có cắm không</td></tr>
+        <tr><td>Tồn đọng</td><td>số dòng <code>error_log</code> chưa gửi · số vé <code>unused</code> còn hạn · số vé kẹt <code>in_progress</code> · tuổi gói sao lưu mới nhất</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note"><b>Tương thích tiến, viết thành hai câu thay vì một.</b> Bản 2 nói “máy bỏ qua trường nó không hiểu”, đúng nhưng mới một nửa. Nửa còn lại: <b>Hub không bao giờ được xoá hay đổi nghĩa một trường</b> — chỉ thêm trường mới và thôi ghi trường cũ. Một máy offline hai tuần sẽ đọc gói tin do Hub mới sinh ra; nếu Hub được phép xoá trường thì “bỏ qua trường lạ” không cứu được nó, vì cái thiếu mới là cái làm nó hỏng.</div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Tình huống — đọc theo hàng, không theo cột</div>
+    <h2>Cái gì còn chạy khi cái gì hỏng</h2>
+  </div>
+  <div class="prose">
+    <p>Bảng này là hợp đồng của thiết kế. Nếu một ô nào ở cột “Bán” hay “Pha” chuyển sang đỏ <em>vì Hub</em>, thiết kế đã sai chứ không phải máy hỏng.</p>
+    <p>Bản 3 thêm bảy hàng. Sáu trong số đó không liên quan gì tới Hub — chúng là những cách máy hôm nay đã hỏng được rồi, chỉ là chưa ai viết ra; và một hệ giám sát không biết trước chúng thì sẽ báo sai nguyên nhân đúng lúc bạn cần nó nhất.</p>
+  </div>
+  <div class="tablewrap">
+    <table class="matrix">
+      <thead><tr><th>Hỏng cái gì</th><th>Bán</th><th>Pha</th><th>In nhãn</th><th>Quản trị tại máy</th><th>Đồng bộ Hub</th><th>Ghi chú</th></tr></thead>
+      <tbody>
+        <tr><td>Mất mạng / Hub sập</td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-stop">dừng</span></td><td>Thực đơn cũ dần. Agent thử lại, mốc không tiến, không mất dữ liệu.</td></tr>
+        <tr><td>Agent lỗi / crash-loop</td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-stop">dừng</span></td><td>Chính là lý do agent tách unit riêng.</td></tr>
+        <tr><td>MySQL tại máy sập</td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-warn">nhịp tim</span></td><td>Đây là hỏng nặng nhất và Hub phải cảnh báo trong 2 phút. <code>flow.log</code> vẫn ghi.</td></tr>
+        <tr><td>Máy in hỏng / hết giấy</td><td><span class="pill p-warn">một nửa</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td>Chuyển <code>order_mode</code> sang chỉ <code>runDirect</code>. Lệnh này Hub gửi được.</td></tr>
+        <tr><td>Máy quét QR hỏng</td><td><span class="pill p-warn">một nửa</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td>Như trên, ngược lại: chỉ <code>runDirect</code>.</td></tr>
+        <tr><td>Panel I2C treo</td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-warn">một nửa</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td>Món chỉ có bước <code>pump</code> vẫn pha; món có bước <code>manual</code> thì không. Xem <code>PANEL_MAX_LEDS_ON</code>.</td></tr>
+        <tr><td>Cân load cell sai</td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td>Bước <code>start</code> cân ly rỗng nên mọi đơn dừng ở cổng đầu. <code>hx711_diag.py</code> phân loại được.</td></tr>
+        <tr><td>Trình duyệt kiosk chết</td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><code>kiosk_watchdog.py</code> dựng lại. Hub đếm số lần dựng lại — dựng nhiều là điềm.</td></tr>
+        <tr><td>Đồng hồ sai sau mất điện</td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-warn">một nửa</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-warn">một nửa</span></td><td><span class="pill p-warn">một nửa</span></td><td>Nhãn hợp lệ bị từ chối, token hết hạn sớm, mốc quét nhảy lùi. Xem lỗi chặn thứ ba.</td></tr>
+        <tr><td><b>Khách quét rồi bỏ đi</b> <span class="mono">(mới)</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><b>Cổng đặt ly không có hạn giờ.</b> <code>measure_cup_weight()</code> chờ vô hạn, chỉ tỉnh dậy vì <code>gate_abandoned()</code> — tức là vì có người bấm “Hủy đơn” trên màn hình pha chế. Máy kẹt, vé kẹt <code>in_progress</code>, và màn hình bán hàng đã chuyển đi nên khách kế tiếp nhìn thấy đơn dở của người khác. Xem mục dưới bảng.</td></tr>
+        <tr><td><b>Chế độ test bị bỏ quên bật</b> <span class="mono">(mới)</span></td><td><span class="pill p-warn">một nửa</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td>Nút bảng 15. Màn hình bán hàng tự nhảy sang màn hình test — nhưng nếu kiosk nạp lại sau đó, nó quay về thực đơn và <b>vẫn in nhãn được</b>. Máy trông hoàn toàn khoẻ, nhịp tim bình thường, và không bán được gì. Mã quét lúc này <em>nằm chờ</em> và sẽ được pha ngay khi tắt chế độ test.</td></tr>
+        <tr><td><b>Thẻ nhớ đầy</b> <span class="mono">(mới)</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-warn">một nửa</span></td><td>MySQL dừng ghi trước tiên. <code>log_event()</code> nuốt <code>OSError</code> nên <code>flow.log</code> im lặng biến mất — đúng cái nhật ký bạn sẽ đi tìm. Thủ phạm thường là <code>journal</code>, ảnh món, và clip <code>recipe/media</code> (12 MB mỗi cái).</td></tr>
+        <tr><td><b>Bán quá tay, hết nguyên liệu</b> <span class="mono">(mới)</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-warn">một nửa</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td>Vé không giữ chỗ tồn kho. Nhãn vẫn in, đơn hỏng ở bước bơm. Trông <em>y hệt</em> một cái bơm hỏng trên bảng điều khiển Hub. Xem mục Tiền, vé, và tồn kho.</td></tr>
+        <tr><td><b>Mất điện giữa lúc pha</b> <span class="mono">(mới)</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-stop">dừng</span></td><td>Điện lại: <code>release_stranded()</code> trả vé về <code>unused</code>, <code>reset_machine_hardware()</code> tắt bơm và đèn. Ly dở bỏ đi, khách quét lại nhãn cũ. <b>Đây là đường phục hồi được thiết kế tử tế nhất trong cả hệ thống</b> — miễn là đồng hồ đúng.</td></tr>
+        <tr><td><b>Khoá nút Tailscale hết hạn</b> <span class="mono">(mới)</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-warn">một nửa</span></td><td><span class="pill p-stop">dừng</span></td><td>Mất liên lạc <em>im lặng</em> sau ~180 ngày, và mất luôn cả đường SSH để vào sửa. Tiệm vẫn bán bình thường nên không ai gọi. Tắt hết hạn cho tag máy.</td></tr>
+        <tr><td><b>Hub phát hành một bản chụp sai</b> <span class="mono">(mới)</span></td><td><span class="pill p-warn">một nửa</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td>Máy bán, nhưng bán sai giá hoặc sai thực đơn. Không có gì hỏng nên không có gì báo động. Đây là lý do <b>lùi bản danh mục</b> phải là một lệnh một bước, và vì sao vòng phát hành phải bắt đầu bằng một máy bạn đi bộ tới được.</td></tr>
+        <tr><td>Hub bị chiếm quyền</td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-ok">chạy</span></td><td><span class="pill p-stop">phải cắt</span></td><td><b>Sửa so với bản 2.</b> Chỉ đúng nếu <code>apply-release</code> <em>không</em> tin Hub. Một Hub gửi được mã xuống máy thì chạy được mọi thứ, kể cả bơm. Xem mục Tin cậy: bản phát hành phải được ký bằng khoá Hub không giữ.</td></tr>
+        <tr><td>Mất thẻ nhớ của máy</td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-stop">dừng</span></td><td><span class="pill p-stop">dừng</span></td><td><b>Sửa so với bản 2.</b> Câu đó chỉ đúng <em>sau khi</em> lỗi chặn thứ năm được sửa. Hôm nay không có bản sao lưu nào, nên mất thẻ là mất cả lịch sử bán hàng, tài khoản, tồn kho và hiệu chuẩn — không chỉ khoá QR.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose">
+    <p><strong>Hàng đầu tiên đáng được nói kỹ, vì nó là cách máy tự kẹt mà không cần cái gì hỏng.</strong> Một đơn bắt đầu bằng cổng đặt ly: màn hình hiện “Đặt ly rỗng lên bàn cân, rồi bấm BẮT ĐẦU”, và <code>measure_cup_weight()</code> chờ. Nó chờ <b>không có hạn</b>. Không có <code>deadline</code>, không có timeout ở <code>runner.wait()</code>, và cái duy nhất đánh thức nó là <code>gate_abandoned()</code> — nghĩa là một người bấm “Hủy đơn” trên màn hình pha chế.</p>
+    <p>Với một tiệm có nhân viên đứng đó thì không sao: họ thấy màn hình treo và bấm hủy. Với đội máy thì đây là một máy chết đứng ở khoảng cách 200 km, và ba thứ hỏng cùng lúc — vé của khách kẹt ở <code>in_progress</code>, màn hình bán hàng đã chuyển đi nên khách kế tiếp nhìn thấy đơn dở của người khác, và mọi mã quét sau đó không ai đọc.</p>
+    <p>Lệnh <code>release-stranded</code> của bản 2 <em>không</em> gỡ được: nó chỉ chạy khi máy rảnh, mà máy này không rảnh — nó đang mở một đơn. Thiết kế cần <b>hai thứ, và thứ nhất quan trọng hơn</b>:</p>
+    <p><b>1. Một hạn giờ cho các cổng chờ người, đặt tại máy.</b> Cổng đặt ly, bước tay, bước thao tác: quá 10 phút không có ai chạm vào thì tự hủy đơn, trả vé về <code>unused</code>, đưa phần cứng về nghỉ và ghi một dòng nói rõ là “khách bỏ đi”, không phải “máy hỏng”. Việc này đúng ngay cả khi không có Hub, và nó là dạng sửa mà toàn bộ mã nguồn này vốn đã ưa: một hằng số kèm lời giải thích, đặt cạnh <code>CUP_WATCH_SECONDS</code>.</p>
+    <p><b>2. Một lệnh <code>cancel-current-order</code> ở mặt phẳng điều khiển.</b> Hub gọi đúng cái <code>/api/cancel</code> mà màn hình pha chế đang gọi, qua đường relay <code>store_gui/serve.py</code> đã có sẵn. Nó là lối thoát khi hạn giờ chưa tới hoặc khi đơn kẹt vì lý do khác.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Tin cậy</div>
+    <h2>Định danh, bí mật, và cái không khôi phục được</h2>
+  </div>
+  <div class="prose">
+    <p><strong>Định danh máy.</strong> Lúc cài đặt, ghi <code>/etc/flexmix/fleet.env</code> quyền 0600 cạnh <code>qrproto.env</code> — cùng quy ước, cùng lý lẽ. Nó giữ UUID máy và một cặp khoá Ed25519. Agent ký mọi yêu cầu; Hub nhận ra máy bằng khoá, không bằng địa chỉ.</p>
+    <p><strong>Khoá QR ở nguyên chỗ, và đó là một đánh đổi có giá.</strong> Khoá riêng từng máy nghĩa là mất thẻ nhớ là mất khoá, và <b>mọi nhãn đã in chưa quét trở thành giấy vụn</b> — không ai khôi phục được, kể cả Hub. Với vé sống 24 giờ thì thiệt hại tối đa là một ngày bán hàng của một tiệm. Ba lựa chọn:</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Lựa chọn</th><th>Đánh đổi</th></tr></thead>
+      <tbody>
+        <tr><td>Chấp nhận mất</td><td>Đơn giản nhất, an toàn nhất. Mất tối đa một ngày vé của một tiệm. <b>Khuyến nghị.</b></td></tr>
+        <tr><td>Ký gửi khoá ở Hub</td><td>Khôi phục được, nhưng Hub bị chiếm quyền là lộ khoá của cả đội — biến ô “Hub bị chiếm quyền” ở bảng trên từ vàng thành đỏ.</td></tr>
+        <tr><td>Ký gửi ngoại tuyến</td><td>In khoá ra giấy lúc cài đặt, cất két. <code>install.sh</code> <b>đã in nó ra màn hình</b> kèm cảnh báo — chỉ cần biến việc cất giữ thành thủ tục bắt buộc.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose">
+    <p><strong>Tài khoản.</strong> Hub làm chủ <code>admin_user</code>, nhân bản xuống theo phạm vi điểm bán — quản lý tiệm này không xuất hiện trên máy tiệm kia. Đăng nhập tại máy vẫn chạy offline nhờ bản sao. Khoá ký phiên trong <code>admin_account.json</code> vẫn theo máy: token phát ở đây chỉ có giá trị ở đây. Đổi mật khẩu hay khoá tài khoản đẩy <code>sessions_valid_from</code>, xuống máy ở lần đồng bộ kế và kết thúc phiên ở request sau đó — đúng như hôm nay.</p>
+    <p><strong>Một vai trò thứ tư.</strong> Ba vai hiện có (chủ / quản lý / nhân viên) đều là vai <em>trong một tiệm</em>. Đội máy cần vai <em>người vận hành đội</em>, chỉ tồn tại ở Hub, không có tài khoản trên máy nào. Điều đó giữ nguyên bất biến quan trọng nhất của <code>permissions.py</code>: endpoint nào thuộc vùng nào là quyết định của mã, không phải của màn hình.</p>
+    <p><strong>Tailscale hết hạn khoá nút.</strong> Mặc định khoá nút hết hạn sau khoảng 180 ngày và nút rơi khỏi tailnet — với một máy trong tiệm không có ai đăng nhập lại, đó là mất liên lạc im lặng đúng lúc bạn quên mất nó. Tắt hết hạn cho tag của máy, hoặc dùng auth key có thời hạn dài và đưa việc gia hạn vào lịch.</p>
+    <p><strong>Bản phát hành phải được ký bằng một khoá Hub không giữ.</strong> Đây là điểm sửa quan trọng nhất của bản 3, và nó xuất phát từ một mâu thuẫn trong chính bản 2: bảng tình huống hứa rằng một Hub bị chiếm quyền <em>“không chạy được bơm”</em>, trong khi bảng lệnh ngay bên dưới lại cho Hub một lệnh <code>apply-release</code> — <em>“tải mã, migrate, khởi động lại”</em>. Hai câu đó không thể cùng đúng. Ai gửi được mã xuống máy thì chạy được mọi thứ trên máy đó, kể cả bơm, kể cả đọc <code>QRPROTO_KEY</code>.</p>
+    <p>Cách giữ lời hứa mà vẫn giữ được lệnh: <b>Hub chỉ được quyền gọi tên một bản, không được quyền tạo ra một bản.</b> Bản phát hành là một git tag ký bằng khoá riêng cất ngoại tuyến (cùng két với bản in <code>QRPROTO_KEY</code>). Khoá công khai tương ứng nằm sẵn trên máy từ lúc cài, trong <code>/etc/flexmix/fleet.env</code>. Agent tải mã theo tag Hub chỉ định, <b>tự kiểm chữ ký trước khi chạy bất cứ thứ gì</b>, và từ chối im lặng nếu không khớp. Hub bị chiếm quyền khi đó chỉ có thể bắt cả đội quay về một bản <em>đã từng được ký</em> — tệ, nhưng không phải là chạy mã tuỳ ý. Đây là thứ biến bán kính thiệt hại của Hub từ “toàn quyền trên ba mươi máy” thành “đổi được thực đơn và giá”.</p>
+    <p><strong>Những API tại máy hôm nay không hỏi ai cả.</strong> Cổng 8080 chỉ nghe trên loopback và địa chỉ Tailscale, và <code>served_paths.py</code> chặn việc đọc file ngoài danh sách trắng — hai quyết định đúng. Nhưng <em>bên trong</em> vòng tin cậy đó, không phải mọi endpoint đều bằng nhau: <code>/api/admin/*</code> đi qua <code>require_login()</code>, còn <code>/api/ticket</code>, <code>/api/print</code>, <code>/api/start</code>, sáu endpoint relay của màn hình pha chế (<code>confirm</code>, <code>pause</code>, <code>resume</code>, <code>cancel</code>, …) và các endpoint của màn hình test thì <b>không hỏi gì cả</b>. Bất kỳ ai vào được tailnet đều phát hành được vé thật, in được nhãn, và hủy được đơn đang pha.</p>
+    <p>Hôm nay tailnet chỉ có bạn, nên đây là một đánh đổi hợp lý. <b>Thêm Hub là thêm người và thêm máy vào đúng cái vòng tròn đó</b> — Hub, VM của nó, laptop của người vận hành. Nên trước pha 06, hoặc buộc các endpoint này chỉ nghe loopback (màn hình kiosk chạy ngay trên máy, nên chúng không cần tailnet), hoặc bắt chúng mang một token của máy. Điểm sáng: các endpoint chạy phần cứng đã có sẵn chốt chặn đúng — <code>order_in_progress()</code> từ chối khi <code>run_flow</code> đang chạy mà nút bảng 15 chưa được bấm, nghĩa là <b>phải có người đứng tại máy</b>. Chốt đó biến mất khi backend chết, tức là đúng lúc có người ở xa đang loay hoay với máy; đáng siết lại thành “luôn cần chế độ thử”.</p>
+    <p><strong>Và một điều nhỏ:</strong> màn hình đăng nhập không đếm số lần sai. Không đáng lo trên loopback; đáng làm khi tailnet rộng ra.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Mặt phẳng điều khiển</div>
+    <h2>Các lệnh, và những lệnh phải từ chối</h2>
+  </div>
+  <div class="prose">
+    <p>Lệnh xếp hàng ở Hub, agent lấy về trong lượt hỏi của chính nó — long-poll hay WebSocket, nhưng luôn là kết nối máy mở ra. Mỗi lệnh có id, được ack, và giao hai lần vẫn an toàn.</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Lệnh</th><th>Làm gì</th><th>Chốt chặn</th></tr></thead>
+      <tbody>
+        <tr><td>sync-now</td><td>Kéo trạng thái mong muốn ngay</td><td>Không cần — chạy lại vô hại</td></tr>
+        <tr><td>set-order-mode</td><td>Công tắc printQR / runDirect</td><td>Tắt cả hai vốn đã bị <code>order_mode.write()</code> từ chối</td></tr>
+        <tr><td>set-display-mode</td><td>Độ phân giải xrandr cho kiosk</td><td>Giữ tự hoàn tác 20 giây; chỉ nhận mode <code>xrandr --query</code> báo có</td></tr>
+        <tr><td>reprint-ticket</td><td>In lại nhãn bị mất</td><td>Dùng <code>order_ticket.claim()</code> — hai tờ giấy, vẫn một ly</td></tr>
+        <tr><td>release-stranded</td><td>Trả lại vé kẹt <code>in_progress</code></td><td>Đã có sẵn <code>release_stranded()</code>; chỉ chạy khi máy rảnh</td></tr>
+        <tr><td>cancel-current-order <span class="mono">(mới)</span></td><td>Hủy đơn đang mở, trả vé về <code>unused</code></td><td>Gọi <code>/api/cancel</code> qua relay đã có. <b>Cần thiết vì <code>release-stranded</code> không chạm được vào một máy đang kẹt ở cổng chờ.</b> Ghi vào nhật ký thao tác kèm tên người bấm.</td></tr>
+        <tr><td>rollback-catalogue <span class="mono">(mới)</span></td><td>Quay về bản chụp N</td><td>Chỉ những bản chụp máy đã từng áp thành công. Nhanh hơn lùi mã, vì thực đơn sai gây thiệt hại nhanh hơn mã sai.</td></tr>
+        <tr><td>run-backup-now <span class="mono">(mới)</span></td><td>Chạy gói sao lưu và đẩy lên</td><td>Không cần — chạy lại vô hại. Đây là nút bạn bấm <em>trước</em> khi làm bất cứ việc gì đáng sợ.</td></tr>
+        <tr><td>restart-backend</td><td><code>systemctl restart</code></td><td>Từ chối khi đang pha dở</td></tr>
+        <tr><td>collect-diagnostics</td><td>Đuôi journal, <code>hx711_diag</code>, <code>flow.log</code></td><td>Giới hạn dung lượng</td></tr>
+        <tr style="background:var(--danger-soft)"><td style="color:var(--danger)">apply-release</td><td style="color:var(--danger)">Tải mã, migrate, khởi động lại</td><td style="color:var(--danger)">Máy rảnh; sao lưu trước; tự lùi bản khi kiểm tra sức khoẻ thất bại. <strong>Và agent tự kiểm chữ ký của tag bằng khoá công khai nằm sẵn trên máy</strong> — Hub gọi tên một bản, Hub không tạo ra một bản. Đây là lệnh duy nhất có thể biến một Hub bị chiếm quyền thành ba mươi máy bị chiếm quyền; xem mục Tin cậy.</td></tr>
+        <tr style="background:var(--danger-soft)"><td style="color:var(--danger)">run-pump / lamp-test / prime</td><td style="color:var(--danger)">Kích hoạt phần cứng</td><td style="color:var(--danger)"><strong>Từ chối trừ khi máy đang ở chế độ thử</strong> — nút panel 15, có người đứng đó. Một cái bơm chạy từ tỉnh khác là nước đổ ra mặt quầy. <b>Chốt này đã tồn tại một nửa</b>: <code>test_gui.hardware.order_in_progress()</code> từ chối khi <code>run_flow</code> đang chạy mà chưa bấm nút 15 — nhưng nó cho qua khi <code>run_flow</code> <em>không</em> chạy, tức là đúng lúc máy đang hỏng và có người ở xa đang gỡ. Siết thành “luôn cần chế độ thử”.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Giám sát</div>
+    <h2>Cảnh báo gì, và ngưỡng nào</h2>
+  </div>
+  <div class="prose">
+    <p>Một bảng điều khiển không ai nhìn thì vô dụng, còn cảnh báo báo quá nhiều thì bị tắt. Danh sách ngắn, mỗi mục kèm việc cần làm — cảnh báo không nói được phải làm gì thì không nên tồn tại.</p>
+    <p><strong>Bảy mục có dấu <span class="mono">(mới)</span> là của bản 3, và phần lớn bắt cùng một loại hỏng mà danh sách bản 2 không nhìn thấy: <em>máy khoẻ mà tiệm không bán được</em>.</strong> Mọi cảnh báo của bản 2 đều đo một thứ đang hỏng. Nhưng cách một đội máy mất tiền nhiều nhất không phải là máy hỏng — nó là một máy có nhịp tim đều đặn, nhiệt độ tốt, MySQL sống, và không bán được ly nào suốt một buổi chiều.</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Cảnh báo</th><th>Ngưỡng</th><th>Mức</th><th>Việc cần làm</th></tr></thead>
+      <tbody>
+        <tr style="background:var(--danger-soft)"><td><b>Không bán được gì trong giờ mở cửa</b> <span class="mono">(mới)</span></td><td>Không vé nào phát hành trong 2 giờ giữa giờ mở cửa</td><td><span class="pill p-stop">gọi ngay</span></td><td><b>Cảnh báo đáng giá nhất trong danh sách.</b> Nó bắt được: chế độ test còn bật, kiosk treo ở trang lỗi, máy in hết giấy, máy quét chết, cửa cuốn chưa mở. Đòi hỏi Hub biết <b>giờ mở cửa của từng điểm bán</b> — xem câu hỏi 07.</td></tr>
+        <tr><td><b>Chế độ test còn bật</b> <span class="mono">(mới)</span></td><td>&gt; 30 phút</td><td><span class="pill p-stop">gọi ngay</span></td><td>Có người bấm nút bảng 15 rồi quên. Máy hoàn toàn khoẻ và không nhận đơn nào.</td></tr>
+        <tr><td><b>Đơn kẹt ở cổng chờ người</b> <span class="mono">(mới)</span></td><td>&gt; 10 phút không ai chạm</td><td><span class="pill p-stop">gọi ngay</span></td><td>Khách quét rồi bỏ đi. Gửi <code>cancel-current-order</code>. Nếu hạn giờ tại máy đã làm xong việc này thì cảnh báo chỉ để đếm tần suất.</td></tr>
+        <tr><td>Máy mất tín hiệu</td><td>Không nhịp tim 10 phút</td><td><span class="pill p-stop">gọi ngay</span></td><td>Mất điện, mất mạng, hay máy hỏng — gọi tiệm hỏi</td></tr>
+        <tr><td>MySQL không nối được</td><td>2 phút</td><td><span class="pill p-stop">gọi ngay</span></td><td>Tiệm đang không bán được. Vào SSH.</td></tr>
+        <tr><td>Tỉ lệ pha hỏng</td><td>&gt; 10% trong 20 đơn gần nhất</td><td><span class="pill p-stop">gọi ngay</span></td><td>Thường là cân hoặc một bơm. Xem <code>error_log</code> theo <code>step_label</code>.</td></tr>
+        <tr><td>Vé kẹt in_progress</td><td>&gt; 30 phút</td><td><span class="pill p-warn">trong ngày</span></td><td>Gửi lệnh <code>release-stranded</code></td></tr>
+        <tr><td>Nguyên liệu dưới ngưỡng</td><td><code>amount &lt; threshold_gram</code></td><td><span class="pill p-warn">trong ngày</span></td><td>Nhắc tiệm châm. Món liên quan đã tự tắt.</td></tr>
+        <tr><td>Kiosk dựng lại nhiều lần</td><td>&gt; 3 lần / giờ</td><td><span class="pill p-warn">trong ngày</span></td><td>Thường là hết RAM hoặc lỗi V3D. Cân nhắc hạ độ phân giải.</td></tr>
+        <tr><td>Lệch đồng hồ</td><td>&gt; 5 giây</td><td><span class="pill p-warn">trong ngày</span></td><td>NTP hỏng. Sẽ làm hỏng vé và mốc đồng bộ.</td></tr>
+        <tr><td>Nhiệt độ CPU</td><td>&gt; 80 °C liên tục 10 phút</td><td><span class="pill p-warn">trong ngày</span></td><td>Quạt hoặc bụi. <code>camera.py</code> đã đọc sẵn số này.</td></tr>
+        <tr><td>Bản chụp áp lỗi</td><td>2 lần liên tiếp</td><td><span class="pill p-warn">trong ngày</span></td><td>Máy đang bán thực đơn cũ. Xem lỗi trong nhật ký áp.</td></tr>
+        <tr><td><b>Vé phát hành nhưng chưa từng quét</b> <span class="mono">(mới)</span></td><td>&gt; 15% số vé trong ngày</td><td><span class="pill p-warn">trong ngày</span></td><td>Ba nguyên nhân rất khác nhau, một triệu chứng: nhãn in mờ, máy quét lỗi, hoặc thu tiền mà không giao hàng. Xem mục Tiền, vé, và tồn kho.</td></tr>
+        <tr><td><b>Sao lưu mới nhất quá cũ</b> <span class="mono">(mới)</span></td><td>&gt; 36 giờ</td><td><span class="pill p-warn">trong ngày</span></td><td>Timer sao lưu chết, hoặc ổ đích đầy. Một sao lưu không ai kiểm tra là một sao lưu chưa tồn tại.</td></tr>
+        <tr><td><b>Đĩa còn trống ít</b> <span class="mono">(mới)</span></td><td>&lt; 15%</td><td><span class="pill p-warn">trong ngày</span></td><td>Thủ phạm quen: <code>journal</code>, ảnh món, clip <code>recipe/media</code>. Đầy đĩa là MySQL dừng ghi.</td></tr>
+        <tr><td>Máy tụt lại phiên bản</td><td>Sau đội &gt; 2 bản phát hành</td><td><span class="pill p-ok">tuần này</span></td><td>Thường là máy hay offline. Kiểm tra đường mạng của tiệm.</td></tr>
+        <tr><td><b>Schema tụt lại</b> <span class="mono">(mới)</span></td><td>Máy thiếu migration mà bản chụp cần</td><td><span class="pill p-ok">tuần này</span></td><td>Máy đang từ chối bản chụp và bán thực đơn cũ. Cần lỗi chặn thứ tư sửa xong mới đo được.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Hai thứ chưa tồn tại và đội máy sẽ cần</div>
+    <h2>Nhật ký thao tác, và ghi chú của khách</h2>
+  </div>
+  <div class="prose">
+    <p><strong>Hôm nay không có gì ghi lại ai đã làm gì.</strong> <code>error_log</code> ghi máy gặp chuyện gì, không ghi người làm gì. Với một tiệm và ba nhân viên thì hỏi nhau là xong. Với đội máy, câu “giá món này đổi lúc nào, ai đổi” không có ai trả lời được — và đó đúng là câu hỏi đầu tiên khi doanh thu một tiệm tụt.</p>
+    <p>Đề xuất một bảng <code>audit_log</code> ghi từng thao tác quản trị: ai, lúc nào, endpoint nào, đối tượng nào, giá trị trước và sau. Chỗ móc vào đã có sẵn và chỉ có một — <code>PATH_AREA</code> trong <code>admin_gui/serve.py</code> đã liệt kê đúng những endpoint cần ghi, nên việc này là một decorator ở một chỗ, không phải rải rác khắp nơi. Ghi tại máy, đẩy lên Hub như <code>error_log</code>.</p>
+    <p><strong>Ghi chú của khách là dữ liệu cá nhân.</strong> <code>order_ticket.note</code> là ô “Special Notes” khách tự gõ, tối đa 200 ký tự. Trên một máy đứng một mình thì nó nằm yên trong tiệm. Đẩy lên Hub là gom ghi chú của mọi khách ở mọi tiệm vào một chỗ, giữ mãi mãi. Không ai cần thế để làm báo cáo.</p>
+    <p>Khuyến nghị: <b>không đẩy <code>note</code> lên Hub</b>. Đẩy phần còn lại của dòng vé. Nếu sau này cần đọc ghi chú để tra một khiếu nại, nó vẫn nằm trên máy và lấy được qua <code>collect-diagnostics</code> — có chủ đích, có ghi vết, thay vì mặc định gom hết.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Vòng đời</div>
+    <h2>Một máy, từ lúc lắp tới lúc thanh lý</h2>
+  </div>
+  <div class="life">
+    <div class="st"><div class="k">01 · lắp</div><div class="n">Cấp phát</div><p>Hub tạo dòng đăng ký, cấp MID và một auth key dùng một lần. <code>install.sh secrets</code> hỏi Hub thay vì hỏi người.</p></div>
+    <div class="st"><div class="k">02 · lắp</div><div class="n">Hiệu chuẩn</div><p>Hiệu chuẩn bơm và cân tại chỗ, khai báo bản đồ khe cắm. Agent đẩy cả ba lên làm bản sao lưu đầu tiên.</p></div>
+    <div class="st"><div class="k">03 · nhận</div><div class="n">Đối chiếu danh mục</div><p>So khớp theo tên, người duyệt bảng ánh xạ. Chỉ làm một lần, và chỉ với máy đã chạy từ trước.</p></div>
+    <div class="st"><div class="k">04 · chạy</div><div class="n">Vận hành</div><p>Đồng bộ, báo cáo, nhận lệnh. Trạng thái bình thường, và là trạng thái máy ở lâu nhất.</p></div>
+    <div class="st"><div class="k">05 · sự cố</div><div class="n">Thay thế</div><p>Máy mới, MID mới. Khôi phục hiệu chuẩn và profile từ Hub; khoá QR thì không — vé cũ mất theo.</p></div>
+    <div class="st"><div class="k">06 · kết</div><div class="n">Thanh lý</div><p>Hub thu hồi khoá thiết bị, gỡ tag Tailscale, giữ lại toàn bộ lịch sử bán hàng. MID <b>không</b> cấp lại.</p></div>
+  </div>
+  <div class="note"><b>MID không tái sử dụng, cùng lý do mã nguyên liệu không tái sử dụng.</b> Báo cáo lịch sử khoá theo <code>(machine_id, serial)</code>. Cấp lại MID 7 cho một máy mới là trộn doanh thu của hai máy khác nhau vào cùng một dòng, và không có cột nào để tách chúng ra lại.</div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Vận hành</div>
+    <h2>Đưa phần mềm xuống các tiệm</h2>
+  </div>
+  <div class="prose">
+    <p><code>deploy/install.sh</code> đã là nền tảng đúng và không nên thay. Mười hai pha, pha nào cũng chạy lại được, và một pha <code>verify</code> chỉ đọc và nói thẳng cái gì đang thiếu. Agent điều khiển nó thay vì tự nghĩ ra cách đóng gói mới.</p>
+    <p>Một bản phát hành là một git tag đã ký. Hub gán tag cho một <strong>vòng</strong>; agent tải về, chạy đúng những pha bản phát hành khai báo, rồi báo sức khoẻ. Vòng: một máy thử bạn đi bộ tới được → một điểm bán → cả đội, mỗi vòng chỉ mở khi vòng trước còn khoẻ đủ lâu.</p>
+    <p><strong>Rủi ro nằm ở migration.</strong> Quy ước sẵn có đã đúng — <code>backup_before_&lt;việc&gt;_&lt;ngày&gt;.sql</code> cạnh <code>migrate_&lt;việc&gt;.sql</code>. Agent tự sao lưu trước <code>database.main update</code>, giữ ba bản gần nhất, báo lỗi thật to. Chỉ tiến không lùi: lùi bản là lùi <em>mã</em> trên schema đã migrate, nên mọi migration phải thêm trước, xoá ở bản sau.</p>
+    <p><strong>Lệch phiên bản giữa Hub và máy là bình thường, không phải lỗi.</strong> Một máy offline hai tuần sẽ nhận bản chụp do Hub mới sinh ra. Nên bản chụp phải <b>tương thích tiến</b>: máy bỏ qua trường nó không hiểu, và mỗi bản chụp khai báo phiên bản schema tối thiểu nó cần. Máy quá cũ thì từ chối áp và báo lên — không đoán.</p>
+    <p><strong>Lùi bản danh mục cũng phải có.</strong> Không chỉ lùi mã. Hub giữ N bản chụp gần nhất và “quay về 847” là một lệnh, vì thực đơn sai gây thiệt hại nhanh hơn mã sai.</p>
+    <p><strong>Kiểm thử không cần ba mươi máy.</strong> Phần lớn mã agent chưa từng thấy phần cứng: nó nói chuyện HTTP và MySQL. Dựng một <em>máy giả</em> — MySQL trong container, cùng schema, không GPIO — rồi chạy hai ba chục cái trên một máy tính để thử phát hành theo vòng, va chạm serial, và cảnh báo mất tín hiệu. Những gì cần phần cứng thật thì đã có <code>test_gui</code> và <code>hx711_diag.py</code>.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Trình tự — mỗi bước tự nó có ích và tự nó lùi được</div>
+    <h2>Lộ trình triển khai</h2>
+  </div>
+  <div class="phases">
+    <div class="phase zero">
+      <div class="n">00</div>
+      <div class="body">
+        <h3>Sửa năm lỗi chặn</h3>
+        <p>Gỡ bảy file runtime khỏi git và đổi cách phát hành sang “checkout tag ra thư mục mới + đổi symlink”; tách <code>machine_profile.json</code>; buộc đồng bộ NTP; thêm bảng <code>schema_migration</code>; dựng timer sao lưu đêm ra một ổ khác. Chưa có Hub, chưa có agent.</p>
+        <p><b>Việc này đúng ngay cả khi bạn quyết định không làm đội máy.</b> Hôm nay <code>git pull</code> trên máy đang chạy đã hỏng sẵn, và một cái thẻ nhớ chết đã đủ xoá toàn bộ lịch sử bán hàng.</p>
+      </div>
+      <div class="risk"><span class="lab">Rủi ro cho tiệm</span><span class="val">Không — và gỡ được hai rủi ro đang tồn tại</span></div>
+    </div>
+    <div class="phase zero">
+      <div class="n">00<span style="font-size:.5em">b</span></div>
+      <div class="body">
+        <h3>Năm việc nhỏ, đúng dù có Hub hay không</h3>
+        <p>Không phải lỗi chặn — nhưng cả năm đều là chỗ máy hôm nay <em>im lặng</em> ở đúng chỗ nó nên lên tiếng, và cả năm sẽ nặng lên khi có Hub đổi thực đơn từ xa. Mỗi việc gói trong một hai trăm dòng.</p>
+        <p>① <b>Hạn giờ cho các cổng chờ người</b> — hết giờ thì tự hủy, trả vé, ghi “khách bỏ đi”. ② <b>Tiền kiểm tính bán được</b> khi lưu công thức: ≤ 24 mã lựa chọn, ≤ 12 lựa chọn mỗi đơn, mọi nguyên liệu <code>PUMP</code> đều có khe. ③ <b>Kiểm tồn kho và trạng thái bán lúc phát hành vé</b>, ngay trong câu <code>INSERT ... SELECT</code> đang có. ④ <b>Báo lại giá khi lệch</b>: màn hình gửi kèm giá nó đang hiển thị, lệch thì 409. ⑤ <b>Món bị rút khỏi thực đơn trả lời bằng lời từ chối lịch sự</b>, không phải một lỗi máy ghi vào <code>error_log</code>.</p>
+      </div>
+      <div class="risk"><span class="lab">Rủi ro cho tiệm</span><span class="val">Thấp — mỗi việc lùi được riêng</span></div>
+    </div>
+    <div class="phase">
+      <div class="n">01</div>
+      <div class="body">
+        <h3>Định danh, và chỉ thế thôi</h3>
+        <p><code>/etc/flexmix/fleet.env</code>, dòng đăng ký ở Hub cho mỗi máy, MID do Hub cấp, ACL tag Tailscale với khoá không hết hạn. Kết thúc pha này bạn biết chính xác mình có bao nhiêu máy và với tới được tất cả.</p>
+      </div>
+      <div class="risk"><span class="lab">Rủi ro cho tiệm</span><span class="val">Không — không đổi đường chạy nào</span></div>
+    </div>
+    <div class="phase">
+      <div class="n">02</div>
+      <div class="body">
+        <h3>Giám sát, chỉ đọc</h3>
+        <p>Agent đẩy nhịp tim, <code>error_log</code>, <code>order_ticket</code> (bỏ <code>note</code>), tồn kho, bản đồ khe cắm và gói sao lưu đêm. Hub mọc bảng điều khiển và mười bảy cảnh báo ở trên. Migration thêm <code>updated_at</code> vào <code>order_ticket</code> nằm ở pha này, và <b>giờ mở cửa của từng điểm bán</b> phải được khai ở đây — nếu không thì cảnh báo đáng giá nhất trong danh sách không chạy được.</p>
+      </div>
+      <div class="risk"><span class="lab">Rủi ro cho tiệm</span><span class="val">Gần như không — agent chỉ đọc</span></div>
+    </div>
+    <div class="phase">
+      <div class="n">03</div>
+      <div class="body">
+        <h3>Đối chiếu danh mục, chưa đẩy xuống</h3>
+        <p>Hub dựng danh mục chuẩn và bảng ánh xạ mã cho từng máy, có người duyệt. Hub tính tập món pha được và <b>đối chiếu với thực đơn máy đang bán</b> — bước này thường lộ ra vài chỗ đi dây không ai nhớ. Chưa gửi gì xuống.</p>
+      </div>
+      <div class="risk"><span class="lab">Rủi ro cho tiệm</span><span class="val">Không — vẫn chỉ đọc</span></div>
+    </div>
+    <div class="phase">
+      <div class="n">04</div>
+      <div class="body">
+        <h3>Danh mục đi xuống</h3>
+        <p>Bản chụp bắt đầu áp thật, có ghim theo máy và lùi bản. Bắt đầu bằng những trường an toàn: giá, tên, ảnh, trạng thái bán. <b>Công thức và mã nguyên liệu đi sau</b>, qua cửa sổ yên tĩnh.</p>
+      </div>
+      <div class="risk"><span class="lab">Rủi ro cho tiệm</span><span class="val">Có thật — bản chụp sai là đổi thực đơn</span></div>
+    </div>
+    <div class="phase">
+      <div class="n">05</div>
+      <div class="body">
+        <h3>Tài khoản, phân quyền, nhật ký thao tác</h3>
+        <p>Hub làm chủ <code>admin_user</code> theo điểm bán, thêm vai người vận hành đội, và bảng <code>audit_log</code> móc vào <code>PATH_AREA</code>.</p>
+      </div>
+      <div class="risk"><span class="lab">Rủi ro cho tiệm</span><span class="val">Bị khoá ngoài. Luôn giữ <code>auth.py --set-password</code> chạy được tại máy</span></div>
+    </div>
+    <div class="phase">
+      <div class="n">06</div>
+      <div class="body">
+        <h3>Lệnh và phát hành theo vòng</h3>
+        <p>Cấu hình từ xa, chẩn đoán, triển khai theo vòng có cổng sức khoẻ và tự lùi bản. Để cuối vì đây là pha duy nhất có thể làm hỏng một máy bạn không đi tới được.</p>
+      </div>
+      <div class="risk"><span class="lab">Rủi ro cho tiệm</span><span class="val">Cao nhất — bắt buộc có vòng máy thử</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Đã cân nhắc và loại bỏ</div>
+    <h2>Những hướng không chọn</h2>
+  </div>
+  <div class="rejects">
+    <div class="reject">
+      <div class="h"><span class="x">✕</span> Máy làm replica của MySQL</div>
+      <p>Replication là được ăn cả ngã về không trên schema mà cả hai bên đều ghi — máy làm chủ tồn kho và vé. Nó còn cần mở cổng vào máy, và biến một lần đứt mạng thành một lần mất dữ liệu.</p>
+    </div>
+    <div class="reject">
+      <div class="h"><span class="x">✕</span> Một database trên mây, máy làm client mỏng</div>
+      <p>Tiệm mất mạng là không bán được. Nó cũng nhét hàng trăm mili-giây vào <code>claim()</code> — thứ đang là một UPDATE nguyên tử tại chỗ và là lý do một nhãn không thể dùng hai lần.</p>
+    </div>
+    <div class="reject">
+      <div class="h"><span class="x">✕</span> Đánh số lại nguyên liệu cho toàn đội</div>
+      <p>Cách “sạch sẽ” nhất, và là cách hỏng nặng nhất: nó âm thầm đổi nghĩa của mọi tờ nhãn đang lưu hành. Bảng ánh xạ ở Hub cho cùng kết quả mà không đụng vào giấy đã in.</p>
+    </div>
+    <div class="reject">
+      <div class="h"><span class="x">✕</span> Một QRPROTO_KEY dùng chung cả đội</div>
+      <p>Cho phép nhãn in ở tiệm này chạy ở tiệm khác, và biến một lần lộ khoá thành một lần in lại toàn đội. Giữ khoá riêng chẳng tốn gì ngoài rủi ro mất thẻ nhớ — đã tính ở trên.</p>
+    </div>
+    <div class="reject">
+      <div class="h"><span class="x">✕</span> Cho :8080 nghe trên LAN để Hub gọi vào</div>
+      <p>Xoá bỏ một quyết định bảo mật đã cân nhắc kỹ (<code>net_addresses.py</code>, <code>served_paths.py</code>). Chỉ gọi ra cho cùng kết quả, lại sống sót qua NAT, captive portal và việc tiệm đổi router.</p>
+    </div>
+    <div class="reject">
+      <div class="h"><span class="x">✕</span> Thêm agent làm thread thứ tư trong main.py</div>
+      <p>Hợp đồng <code>os._exit()</code> toàn tiến trình là đúng cho ba thread phải cùng sống mới bán được. Buộc một client mạng vào đó là biến sự cố của Hub thành thời gian chết của tiệm.</p>
+    </div>
+    <div class="reject">
+      <div class="h"><span class="x">✕</span> Gom hiệu chuẩn bơm về trung tâm</div>
+      <p>9.552823 g/s với vùng chết 0.284 g mô tả một dây bơm trên một máy. Dùng chung một giá trị là âm thầm pha sai ở khắp nơi.</p>
+    </div>
+    <div class="reject">
+      <div class="h"><span class="x">✕</span> Đẩy ghi chú của khách lên Hub</div>
+      <p>Gom dữ liệu cá nhân của mọi khách ở mọi tiệm vào một chỗ, giữ mãi mãi, để phục vụ những báo cáo không cần đến nó.</p>
+    </div>
+    <div class="reject">
+      <div class="h"><span class="x">✕</span> Để Hub tự dựng và tự ký bản phát hành</div>
+      <p>Gọn hơn một bước ký ngoại tuyến, và nó xoá mất tài sản quý nhất của thiết kế này: câu <em>“Hub bị chiếm quyền thì tiệm vẫn bán, vẫn pha, và khoá QR vẫn an toàn.”</em> Hub gọi tên một bản đã ký; Hub không tạo ra bản nào.</p>
+    </div>
+    <div class="reject">
+      <div class="h"><span class="x">✕</span> Đánh số lại <code>ingredient_id</code> cho gọn vùng 1–24</div>
+      <p>Đúng về mặt dọn dẹp và là cùng một sai lầm với việc đánh số lại toàn đội, chỉ ở quy mô một máy: nó đổi nghĩa của mọi nhãn đang lưu hành. Vùng 1–24 được <em>giữ chỗ từ đây trở đi</em> cho nguyên liệu khách chọn được; những gì đã cấp thì để yên.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <div class="eyebrow">Trước khi tôi viết bất kỳ dòng mã nào</div>
+    <h2>Những điều chỉ bạn quyết được</h2>
+  </div>
+  <div class="qs">
+    <div class="q"><div class="k">01</div><div><div class="t">Một thực đơn chung cả đội, hay mỗi điểm bán một thực đơn?</div><div class="d">Thay đổi mô hình dữ liệu của Hub nhiều hơn mọi thứ khác. Giả định của tôi: một danh mục chung, ghi đè giá và trạng thái bán theo từng điểm, và tập món pha được thì tự tính từ bản đồ khe cắm.</div></div></div>
+    <div class="q"><div class="k">02</div><div><div class="t">Bao nhiêu máy, và cách nhau bao xa?</div><div class="d">Ba máy trong một toà nhà và ba mươi máy khắp cả nước là hai bài toán khác nhau. Cái sau bắt buộc làm thật pha 06; cái trước có thể dừng ở pha 04.</div></div></div>
+    <div class="q"><div class="k">03</div><div><div class="t">Các máy có đi dây giống nhau không?</div><div class="d">Nếu mọi máy đều dùng đúng <code>PUMP_GPIO</code> hiện tại và cùng bộ nguyên liệu ở cùng khe, phần lớn phần phức tạp về năng lực máy biến mất. Nếu khác nhau, nó là phần lõi. Đây là câu tôi cần biết sớm nhất.</div></div></div>
+    <div class="q"><div class="k">04</div><div><div class="t">Khoá QR: chấp nhận mất, hay ký gửi?</div><div class="d">Khuyến nghị của tôi là chấp nhận mất, kèm thủ tục in khoá cất két lúc lắp máy. Ký gửi ở Hub tiện hơn nhưng làm Hub thành mục tiêu đáng giá hơn nhiều.</div></div></div>
+    <div class="q"><div class="k">05</div><div><div class="t">Có bao giờ khách đặt ở máy này rồi lấy ở máy khác không?</div><div class="d">Nếu có, thẩm quyền về vé phải chuyển lên Hub và QR cần chế độ liên máy — việc lớn, thiết kế riêng. Lưu ý mỗi máy chỉ pha được một ly một lúc, nên “đặt chỗ trước ở máy rảnh nhất” là một bài toán khác nữa.</div></div></div>
+    <div class="q"><div class="k">06</div><div><div class="t">Hub đặt ở đâu?</div><div class="d">MySQL 8 trên một VM giữ nguyên một phương ngữ SQL cho cả dự án và cho phép Hub tái dùng lối viết DDL trong <code>database.sql</code>. Khuyến nghị, trừ khi bạn đã có chỗ.</div></div></div>
+    <div class="q"><div class="k">07</div><div><div class="t">Khách trả tiền lúc nào — lúc in nhãn, hay lúc nhận ly?</div><div class="d"><b>Câu hỏi mới của bản 3, và nó quyết định con số doanh thu nghĩa là gì.</b> Hôm nay báo cáo chỉ đếm vé đã pha xong, nên nếu tiệm thu tiền lúc in nhãn thì mọi nhãn khách bỏ đi là tiền đã thu mà không sổ nào ghi. Nếu thu lúc nhận ly thì con số hiện tại đã đúng, và “vé phát hành nhưng chưa quét” chỉ là chỉ dấu thiết bị hỏng chứ không phải chỉ dấu thất thoát. Hai câu trả lời dẫn tới hai bảng điều khiển khác nhau.</div></div></div>
+    <div class="q"><div class="k">08</div><div><div class="t">Giờ mở cửa của mỗi điểm bán, và ai trực khi có cảnh báo?</div><div class="d">Cảnh báo <em>“không bán được gì trong giờ mở cửa”</em> là cái bắt được nhiều loại hỏng nhất, và nó không tồn tại được nếu Hub không biết giờ mở cửa. Đi kèm là một câu hỏi tổ chức: một cảnh báo <span class="pill p-stop">gọi ngay</span> lúc 21 giờ chủ nhật thì <em>gọi ai</em>? Nếu không có câu trả lời, hãy hạ mọi thứ xuống <span class="pill p-warn">trong ngày</span> và nói thật điều đó, thay vì để một mức khẩn cấp mà không ai nhận.</div></div></div>
+    <div class="q"><div class="k">09</div><div><div class="t">Ai được đổi giá từ xa, và có cần hai người duyệt không?</div><div class="d">Bản 2 thêm vai <em>người vận hành đội</em> chỉ tồn tại ở Hub. Câu chưa hỏi: vai đó một mình đổi được giá của ba mươi máy chứ? Một lần gõ nhầm số 0 ở Hub lan ra cả đội trong một phút, và lùi bản danh mục sửa được — nhưng chỉ sau khi có người nhận ra. Với thay đổi chạm vào giá và công thức, một bước duyệt thứ hai là rẻ.</div></div></div>
+  </div>
+</section>
+
+<footer>
+  <span>FlexMix — đề xuất thiết kế đội máy, bản 3, đọc theo mã nguồn tại <span class="mono">ce17f05</span></span>
+  <span class="mono">danh mục ↓ &nbsp; sự kiện ↑ &nbsp; bí mật ở nguyên chỗ</span>
+</footer>
+
+</div>
+
+</body>
+</html>
