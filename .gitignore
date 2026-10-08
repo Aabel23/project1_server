@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+# Khoá và bí mật không bao giờ vào repo
+*.key
+*.pem
+*.crt
+/var/
+/etc/
+server.toml
