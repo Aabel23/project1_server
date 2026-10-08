@@ -96,3 +96,8 @@ Doc và `docs/server_plan.html` đã đồng bộ với kết quả này. Trang 
 từ bảng trong `index.md`; Q8 đã xử lý, còn 9 câu hỏi. Dựng/kiểm lại bằng
 `node internal/plan/cong_cu/dung_trang_plan.js` và
 `node internal/plan/cong_cu/check_trang_plan.cjs`.
+
+Cập nhật git: user đã lưu code, doc và memory trong commit `79a050e` (phase 0).
+Các ghi chú “chưa commit” phía trên là hiện trạng lúc bàn giao trước commit này.
+Codex tiếp tục giải quyết conflict README với commit GitHub `f2c2250` và push
+theo yêu cầu user; không sửa code máy trong bước giải quyết conflict.

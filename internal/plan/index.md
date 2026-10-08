@@ -36,7 +36,7 @@ Cập nhật 08/10/2026. Đây là kết quả trên máy dev; ký hiệu → gi
 Các khối nghiệp vụ/bảo mật khác chưa triển khai; các khối phía máy chờ Q6.
 R1–R6 và X1–X6 chưa bắt đầu. Wiring hiện chỉ là khung. CA nội bộ vẫn là
 phương án LAN của plan; chưa có quyết định chuyển sang CA bên thứ ba.
-Các thay đổi tiếp quản và sửa lỗi còn trong working tree chính, chưa commit/merge.
+Code, doc và memory tiếp quản/sửa lỗi đã lưu trong commit `79a050e` (phase 0).
 
 ## Bạn cần biết
 
