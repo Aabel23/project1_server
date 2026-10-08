@@ -226,6 +226,7 @@ ${css}
         <div class="sec-head"><span class="sec-no">Mục 1</span><h2>Bạn cần biết</h2></div>
         <div class="need"><ol>
           <li><b>Xây từng khối, rồi ráp.</b> Mỗi khối làm xong và test xong một mình, dùng stub thay cho khối bên kia. Sáu lần ráp R1–R6 mới nối các khối thật với nhau và chạy kịch bản đầu–cuối.</li>
+          <li><b>Module cô lập, nối tại một điểm.</b> Mỗi khối là một module trong thư mục riêng, không import module khác. Mọi thứ nối với nhau chỉ ở <code>wiring.py</code> (server) và <code>agent/main.py</code> (máy), qua các <code>Protocol</code> trong <code>contracts/</code>. Muốn lần một luồng: đọc <code>wiring.py</code> rồi <code>contracts/</code>. Test tự động chặn import chéo. Một khối, một agent.</li>
           <li><b>Hợp đồng làm trước.</b> Tầng 0 chốt routing, gói FM1, body route agent, snapshot menu, loại lệnh, ngữ pháp helper và bảng nào do khối nào ghi. Có hợp đồng thì hai đầu một mối nối làm song song được.</li>
           <li><b>G0 vẫn là cổng chặn.</b> HPKE của <code>cryptography</code> không liên thông byte-exact, hoặc chưa có số đo trên Pi thật, thì dừng lại hỏi bạn.</li>
           <li><b>Lỗi khi ráp quay về khối.</b> Lỗi tìm thấy lúc ráp được ghi về khối gây lỗi; khối đó thêm test tái hiện rồi sửa. Không vá tại chỗ trong bước ráp.</li>

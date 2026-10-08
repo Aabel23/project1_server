@@ -35,6 +35,24 @@
    - Q8 (git init) chặn bước đầu tiên.
    - Các câu khác chỉ chặn đúng khối cần tới.
 
+## Module cô lập, nối tại một điểm
+
+User chốt ngày 08/10: mỗi khối là một module cô lập. Các module chỉ nối với nhau thành luồng tại **một điểm duy nhất**, để dễ bảo trì và dễ lần theo code.
+
+| Thành phần | Chỗ | Được biết gì |
+|---|---|---|
+| Hạ tầng dùng chung | `server/server/core/` (db, net, config) | Không có nghiệp vụ |
+| Bảo mật | `server/server/security/` (S-SECA, S-FM1) | Chỉ `core` và `contracts` |
+| Module | `server/server/modules/<tên>/`: `__init__.py` chỉ export `setup(deps, registrar)`; `api.py` hàm public; `routes.py` handler; `store.py` SQL bảng của mình; `migrations/` | Chỉ `core`, decorator của `security`, `config.routing`, `contracts`. **Không import module khác** |
+| Hợp đồng dạng code | `server/server/contracts/*.py`: `Protocol` cho từng mối nối, dataclass dữ liệu, ngoại lệ chung | Không có logic |
+| Điểm nối | `server/server/wiring.py` | Nơi duy nhất biết mọi module: tạo deps, gọi `setup()` theo thứ tự, đăng ký route |
+| Phía máy | `agent/main.py` là điểm nối; `apply_menu`, `stock_report`, `uploader`, `commands` không import nhau, nhận `net`, `ledger`, `helper` qua deps | Như trên |
+
+- **Muốn lần một luồng:** đọc `wiring.py` để biết module nào nối với module nào, rồi đọc `contracts/` để biết chữ ký hàm.
+- **Kiểm tự động:** `tests/c0/test_isolation.py` quét import. Test đỏ nếu một module import module khác hoặc import `wiring`.
+- **Một khối = một module = một agent.** Mỗi agent, Opus hay GPT Sol, chỉ sửa thư mục của khối mình và test của khối mình. Agent không sửa `wiring.py`, `contracts/` hay `routing.py`. Cần đổi các file đó thì báo lại để sửa hợp đồng (xem "Đổi hợp đồng" ở `hop_dong.md`).
+- **Ai nối module vào `wiring.py`:** người làm lần ráp R1–R6, không phải agent của khối.
+
 ## Sơ đồ khối
 
 Bố cục theo sơ đồ "râu" của thiết kế. Thứ tự đọc: module → bảo mật → cổng → LAN → cổng của máy → FM1 phía máy → module của máy.

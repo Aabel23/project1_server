@@ -1,7 +1,11 @@
 # Khối phía server
 
 - **Trạng thái:** CHƯA THỰC HIỆN.
-- **Nơi đặt code:** `server/server/`. Cây thư mục theo mục 10 của thiết kế; mỗi module nằm ở `modules/<tên>/`.
+- **Nơi đặt code:** theo mục "Module cô lập" của `index.md`.
+  - S-DB ở `server/server/core/db/`, S-NET ở `core/net/`, UI-SHELL ở `server/server/static/shell/`.
+  - S-SECA ở `security/seca/`, S-FM1 ở `security/fm1/`, S-EPOCH ở `core/epoch/`.
+  - Mỗi module M-* ở `modules/<tên>/`, ví dụ `modules/menu/`.
+  - Không khối nào import ruột khối khác. Mọi thứ nối qua `contracts/` và `wiring.py`.
 - **Test:** `server/tests/<khối>/`. Mọi khối test được một mình bằng stub.
 
 Mỗi khối dưới đây có các mục:

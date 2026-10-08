@@ -42,6 +42,7 @@ Hợp đồng nằm ở `server/internal/contracts/`. Mỗi file ghi:
 | C0.8 | Chủ sở hữu bảng | `contracts/db_ownership.md` | Mỗi bảng server và máy do đúng một khối ghi. Khối khác chỉ đọc hoặc gọi hàm của khối chủ (nguyên tắc "một nơi ghi" ở mục 6 của thiết kế) | |
 | C0.9 | Cấu hình và tham số | `server/server/config/settings.py`, file mẫu | Đọc cấu hình; thiếu khoá bắt buộc thì dừng; mặc định theo bảng ở `index.md` | |
 | C0.10 | Hàm nối giữa các khối | `contracts/interfaces.md` | Chữ ký các hàm ở bảng "Mối nối" của `index.md`, kèm nhánh lỗi | |
+| C0.11 | Khung module cô lập | `server/server/contracts/*.py`, `server/server/wiring.py`, `tests/c0/test_isolation.py` | `Protocol` cho từng mối nối; `wiring.py` khung rỗng ghi thứ tự nối; test quét import để không module nào import module khác. Nguyên tắc ở mục "Module cô lập" của `index.md` | |
 
 **Kiểm tầng 0:**
 
