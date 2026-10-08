@@ -1,6 +1,9 @@
 # Kế hoạch xây dựng server mẹ FlexMix theo khối (bản 2)
 
-- **Trạng thái:** CHƯA THỰC HIỆN. Chưa có dòng code nào.
+- **Trạng thái:** ĐANG THỰC HIỆN. Codex tiếp quản Claude; đã có bản nháp C0,
+  S-DB SQLite tạm, S-NET và UI-SHELL. Đã sửa 2 lỗi P2, 1 lỗi P3; reviewer
+  kiểm lại đạt trong phạm vi sửa. Kiểm trên Windows: **161 test Python đạt**
+  (34.11 s), kiểm UI bằng Node đạt. Chưa nghiệm thu Pi/MySQL/Linux hoặc ráp R1.
 - **Lập ngày:** 2026-10-08. Ngày 08/10, user chọn tổ chức lại plan theo khối thay cho theo phase. Bản theo phase lưu ở `luu_ban_theo_phase/` để đối chiếu.
 - **Nguồn thiết kế:** `docs/server_architect.html` (bản 2). Các khối lấy đúng theo sơ đồ tổng quan ở mục 1 của thiết kế.
 - **Hồ sơ nền:** `agents/memory/hieu_biet_server_me.md`, `phuong_an_kien_truc.md`, `crypto_*.md`, `quy_uoc_so_do.md`.
@@ -11,7 +14,29 @@
 | [khoi_server.md](khoi_server.md) | 15 khối phía server: nền, khung trang, bảo mật, 9 module, khối khôi phục |
 | [khoi_may.md](khoi_may.md) | 9 khối phía máy: agent, helper, màn bán hàng |
 | [rap_trien_khai.md](rap_trien_khai.md) | 6 lần ráp R1–R6 và triển khai X1–X6 |
+| [giao_viec/README.md](giao_viec/README.md) | Phân việc và trạng thái thực thi |
+| [bang_chung/REVIEW_CODEX.md](bang_chung/REVIEW_CODEX.md) | Phát hiện, sửa lỗi, hồi quy và review lại |
+| [giao_viec/CODEX_SQLITE_THONG_BAO_CLAUDE.md](giao_viec/CODEX_SQLITE_THONG_BAO_CLAUDE.md) | Bàn giao Claude; SQLite tạm, migrate MySQL sau |
 | `cong_cu/dung_trang_plan.js` | Dựng lại `docs/server_plan.html` từ các file trên: `node internal/plan/cong_cu/dung_trang_plan.js` (chạy từ `server/`). Sửa plan thì sửa Markdown, không sửa tay HTML |
+| `cong_cu/check_trang_plan.cjs` | Kiểm trạng thái, link và HTML khớp Markdown: `node internal/plan/cong_cu/check_trang_plan.cjs` |
+
+## Tiến độ hiện tại
+
+Cập nhật 08/10/2026. Đây là kết quả trên máy dev; ký hiệu → giữ lại khi còn
+điều kiện nghiệm thu. Trang HTML đọc bảng này để đồng bộ trạng thái các khối.
+
+| Khối | Trạng thái | Đã có / còn chờ | Bằng chứng |
+|---|---|---|---|
+| G0 | → | G0.1–G0.5 đạt trên dev, G0.7 đạt với N=10 giả định; G0.6 chờ benchmark Pi thật | [G0.md](bang_chung/G0.md) |
+| C0 | → | C0.1/C0.2 đã commit; vector, hợp đồng nháp, settings và kiểm import đã có; review không có lỗi mới. Chờ Q1, binding enroll và duyệt hợp đồng mật mã | [C0.md](bang_chung/C0.md) |
+| S-DB | → | SQLite tạm; P2 migration số cũ đã sửa, hồi quy và review lại đạt. Chưa có schema nghiệp vụ; chờ migrate MySQL và R1 | [S-DB.md](bang_chung/S-DB.md) |
+| S-NET | → | TLS, hai pool, CA, wake trên dev; P2 shutdown/P3 redirect đã sửa, hồi quy và review lại đạt. Chrony/systemd mới là mẫu; chờ Linux/Pi/LAN, Q4/Q9 và R1 | [S-NET.md](bang_chung/S-NET.md) |
+| UI-SHELL | → | CSS/font/guard/picker, chữ an toàn và xử lý 401 đã có; kiểm Node đạt, review không có lỗi mới. Chờ trình duyệt/CSP/backend tài khoản ở R1 | [UI-SHELL.md](bang_chung/UI-SHELL.md) |
+
+Các khối nghiệp vụ/bảo mật khác chưa triển khai; các khối phía máy chờ Q6.
+R1–R6 và X1–X6 chưa bắt đầu. Wiring hiện chỉ là khung. CA nội bộ vẫn là
+phương án LAN của plan; chưa có quyết định chuyển sang CA bên thứ ba.
+Các thay đổi tiếp quản và sửa lỗi còn trong working tree chính, chưa commit/merge.
 
 ## Bạn cần biết
 
@@ -30,9 +55,9 @@
    Có hợp đồng rồi thì hai khối ở hai đầu một mối nối làm song song được. Mỗi khối test với stub của khối bên kia.
 3. **Ráp là một bước riêng.** Sáu lần ráp R1–R6 nối các khối đã xong rồi chạy kịch bản đầu–cuối. Lỗi phát hiện khi ráp được ghi về khối gây lỗi, không sửa vá tại chỗ.
 4. **G0 vẫn là cổng chặn.** HPKE của `cryptography` không liên thông byte-exact hoặc chưa có số đo trên Pi thật thì dừng lại hỏi user.
-5. **Có 10 câu hỏi chờ user.**
+5. **Còn 9 câu hỏi chờ user.**
    - Q6 (nhánh máy) chặn mọi khối phía máy.
-   - Q8 (git init) chặn bước đầu tiên.
+   - Q8 đã xử lý: repo và C0.1/C0.2 có commit `aa371dc`.
    - Các câu khác chỉ chặn đúng khối cần tới.
 
 ## Module cô lập, nối tại một điểm
@@ -75,7 +100,7 @@ flowchart LR
     S_SECA["S-SECA Bảo mật A"]
     S_FM1["S-FM1 Middleware FM1"]
     S_NET["S-NET TLS, hai cổng"]
-    S_DB[("S-DB MySQL, migration")]
+    S_DB[("S-DB SQLite tạm, migration")]
     S_EPOCH["S-EPOCH Khôi phục"]
   end
   UI_SHELL["UI-SHELL Trang quản trị"]
@@ -105,9 +130,9 @@ flowchart LR
 | Khối | Trách nhiệm chính | Luồng thiết kế | Chờ user | Đợt |
 |---|---|---|---|---|
 | G0 | Cổng mật mã: spike, số đo trên Pi | mục 4, 10 | — | 0 |
-| C0 | Hợp đồng chung | mục 7, 8 | Q8, Q1 | 0 |
-| S-DB | Kết nối, transaction, chạy migration, kiểm cấu hình InnoDB | mục 8 | — | 1 |
-| S-NET | CA nội bộ, TLS 1.3, hai cổng cheroot, cổng 80, tín hiệu đánh thức, chrony, systemd | mục 6, 10, M2 | Q2, Q9 khi nghiệm thu | 1 |
+| C0 | Hợp đồng chung | mục 7, 8 | Q1 | 0 |
+| S-DB | SQLite tạm: kết nối, transaction, migration; MySQL/InnoDB kiểm sau khi migrate | mục 8 | — | 1 |
+| S-NET | CA nội bộ, TLS 1.3, hai cổng cheroot, cổng 80, tín hiệu đánh thức, chrony, systemd | mục 6, 10, M2 | Q4, Q9; Q2 khi ráp | 1 |
 | UI-SHELL | Khung trang quản trị: css, guard, bộ chọn máy, hàm hiện chữ an toàn | A1, B10 | — | 1 |
 | S-SECA | Bảo mật A: phiên, CSRF, CSP, rate-limit, xác thực lại, quyền, idempotency + epoch | A1, A3 | — | 2 |
 | S-FM1 | FM1 phía server: mã hoá gói, mật mã, pipeline 4.4, claim, high-water, giờ | mục 4, M2, M4 | Q1 | 2 |
@@ -172,7 +197,11 @@ Mỗi mối nối có một hợp đồng ở `hop_dong.md`. Hai khối hai đ�
 
 Sau R6 là triển khai X1–X6 ở `rap_trien_khai.md`: kiểm định, mất điện, tải, chuyển từng máy, xoá admin_gui, runbook.
 
-## Hiện trạng có bằng chứng
+## Hiện trạng ban đầu để đối chiếu
+
+Bảng sau ghi khảo sát trước khi thực thi, không phải tiến độ hiện tại.
+Repo đã được tạo; routing trùng đã bỏ; code mới và bằng chứng nằm ở bảng
+"Tiến độ hiện tại" phía trên.
 
 | Điều | Nguồn |
 |---|---|
@@ -262,9 +291,12 @@ Riêng G0, S-FM1, M-KEY, A-NET, R3 và X1 có thêm cybersecurity và hacker.
 | Q5 | Cho app Android theo R5 nói chuyện thẳng với server? | Không chặn |
 | Q6 | Sửa phía máy trên nhánh `version1.0` hay `version1.1`? | Mọi khối A-*, H-LOCAL |
 | Q7 | Dữ liệu ban đầu lấy từ đâu; có đưa lịch sử đơn cũ lên không? | M-CAT bước nhập, X4 |
-| Q8 | Cho `git init` thư mục `server/`? | C0.1 |
 | Q9 | Máy server, IP cố định, tên in vào cert, số máy bán hàng? | G0 (số kết nối thử), S-NET, R1, X3 |
 | Q10 | Máy gửi lại ledger qua route nào sau khôi phục? Đề xuất `AGENT_HELLO_PATH` | S-EPOCH, A-RUN |
+
+### Câu hỏi đã xử lý
+
+Q8 (khởi tạo repo): đã thực hiện; C0.1/C0.2 có commit `aa371dc`.
 
 ### Tham số mặc định
 

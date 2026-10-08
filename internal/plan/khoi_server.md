@@ -1,6 +1,9 @@
 # Khối phía server
 
-- **Trạng thái:** CHƯA THỰC HIỆN.
+- **Trạng thái:** S-DB/S-NET/UI-SHELL đã có code và kiểm trên dev.
+  Hai lỗi P2 và một lỗi P3 đã sửa, review lại đạt; còn các gate nghiệm thu.
+  Khối bảo mật/nghiệp vụ còn chưa triển khai. Xem [tiến độ](index.md#tiến-độ-hiện-tại)
+  và [báo cáo review](bang_chung/REVIEW_CODEX.md).
 - **Nơi đặt code:** theo mục "Module cô lập" của `index.md`.
   - S-DB ở `server/server/core/db/`, S-NET ở `core/net/`, UI-SHELL ở `server/server/static/shell/`.
   - S-SECA ở `security/seca/`, S-FM1 ở `security/fm1/`, S-EPOCH ở `core/epoch/`.
@@ -18,18 +21,19 @@ Mỗi khối dưới đây có các mục:
 
 ## Nền
 
-### S-DB · MySQL và migration
+### S-DB · SQLite tạm và migration
 
 - **Trách nhiệm:** kết nối, transaction, chạy migration. Không giữ bảng nghiệp vụ nào.
 - **Cung cấp:** `db.transaction()` (context manager), `db.query()`, lệnh `manage.py migrate`.
 - **Cần:** C0.9 (cấu hình DB).
-- **Stub:** không cần. Test chạy với MySQL 8 thật trên máy dev, DB dùng một lần.
+- **Stub:** không cần. Hiện test chạy với SQLite thật trên file `.db` tạm.
+  User cho phép SQLite trước; sẽ migrate MySQL sau, kiểm lại SQL, dữ liệu và InnoDB.
 
 | ID | Việc | Kiểm |
 |---|---|---|
-| S-DB.1 | Pool mysql-connector, `transaction()` dạng context manager. Lấy kiểu viết từ `version1.0/database/db_core.py` | Lỗi giữa transaction thì rollback |
-| S-DB.2 | Chạy migration theo số, ghi `schema_migration`. Kiểu làm theo `version1.0/database/migrate.py`. Mỗi khối mang file migration riêng | Chạy hai lần, lần hai không đổi gì |
-| S-DB.3 | Từ chối khởi động nếu `innodb_flush_log_at_trx_commit` khác 1 hoặc `sync_binlog` khác 1 | Test với MySQL đặt sai |
+| S-DB.1 | Hiện dùng sqlite3, mỗi transaction một connection; commit/rollback rồi đóng. Pool mysql-connector bổ sung khi migrate MySQL | Lỗi giữa transaction thì rollback, kiểm DDL/DML và foreign key trên SQLite |
+| S-DB.2 | Chạy migration theo số, ghi `schema_migration`; mỗi khối mang file riêng. Số bổ sung phải lớn hơn mọi số đã commit | Chạy lại không đổi; checksum/file thiếu/số cũ bị từ chối; lỗi rollback cả đợt |
+| S-DB.3 | Khi migrate MySQL: từ chối khởi động nếu `innodb_flush_log_at_trx_commit` khác 1 hoặc `sync_binlog` khác 1 | Chưa áp dụng SQLite; cần test với MySQL đặt sai sau migrate |
 
 **Xong khi:** `pytest tests/s_db -q` đạt.
 
@@ -41,7 +45,7 @@ Mỗi khối dưới đây có các mục:
   - cổng 80;
   - tín hiệu đánh thức dùng chung;
   - chrony, systemd, log.
-- **Cung cấp:** `serve(admin_app, agent_app)`, `wake.notify(machine_id)` / `wake.wait(machine_id, timeout)`, `CA_CERT_PATH`.
+- **Cung cấp:** `serve(admin_app, agent_app, settings)`, `NetServer.start()/stop()`, `wake.notify(machine_id)` / `wake.wait(machine_id, timeout)`, `CA_CERT_PATH`.
 - **Cần:** G0.7 (mẫu cheroot đã chạy), C0.2, C0.9.
 - **Stub:** hai app Flask giả, mỗi app một route.
 
@@ -49,9 +53,9 @@ Mỗi khối dưới đây có các mục:
 |---|---|---|
 | S-NET.1 | `make_ca.py`: sinh root và leaf. Root ghi ra đường dẫn do người vận hành chọn (USB), không ghi vào thư mục dự án. SAN và hạn leaf lấy từ cấu hình (Q9, Q4). Không dùng lại CA trong `.caddy-data` | `openssl x509 -text` thấy đúng SAN và hạn |
 | S-NET.2 | `tls.py`: chỉ TLS 1.3; khoá phải có quyền 0600, sai thì dừng | `openssl s_client -tls1_2` bị từ chối |
-| S-NET.3 | `main.py`: hai server cheroot, hai pool; tắt êm khi nhận SIGTERM | Route của app này gọi vào cổng kia thì 404 |
-| S-NET.4 | Tín hiệu đánh thức theo máy, dùng chung giữa hai pool | Treo `wait`, gọi `notify`: trả về ngay |
-| S-NET.5 | Cổng 80: chỉ chuyển hướng sang HTTPS và cho tải `ca.crt` kèm vân tay SHA-256 | `curl` trả 301; tải được `ca.crt` |
+| S-NET.3 | `main.py`: hai server cheroot, hai pool; tắt êm khi nhận SIGTERM | Route sang cổng kia trả 404; poll hiện tại và poll đến trong lúc drain bị hủy, không còn worker |
+| S-NET.4 | Tín hiệu đánh thức theo máy; trạng thái dừng giữ tới khi start mở lại wait | Notify chỉ đánh thức đúng máy; poll tới sau cancel trả ngay, restart chờ/notify bình thường |
+| S-NET.5 | Cổng 80: chuyển HTTPS giữ đúng bytes đường dẫn và raw query; tải `ca.crt` kèm SHA-256 | 301 đúng authority cấu hình, path Unicode/dấu % không đổi nghĩa; tải được CA |
 | S-NET.6 | Log: không ghi body, cookie, khoá | Log của một request mẫu không có các trường đó |
 | S-NET.7 | `chrony.conf` (`local stratum 10`, `allow <dải LAN>`, không trỏ nguồn ngoài); unit `flexmix-server.service` chạy bằng user riêng | Máy trong LAN lấy được giờ; reboot thì server tự lên |
 

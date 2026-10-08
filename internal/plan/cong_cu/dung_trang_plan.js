@@ -7,6 +7,17 @@ const PLAN = path.join(__dirname, '..') + '/';
 const out = process.argv[2] || path.join(__dirname, '../../../docs/server_plan.html');
 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const md = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+const idx = fs.readFileSync(PLAN + 'index.md', 'utf8');
+const tableAfter = heading => {
+  const part = idx.split(heading)[1].split(/\r?\n##+ /)[0];
+  return part.split(/\r?\n/).filter(l => /^\|/.test(l) && !/^\|\s*-/.test(l)).slice(1).map(l => l.replace(/^\|\s*|\s*\|\s*$/g, '').split(/\s\|\s/));
+};
+const progress = Object.fromEntries(tableAfter('## Tiến độ hiện tại').map(([id, state, note, evidence]) => {
+  const link = evidence.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+  if (!link || !['○', '→', '✓', '✗', '⏸'].includes(state)) throw new Error('tiến độ không hợp lệ: ' + id);
+  return [id, { state, note, evidence: `<a href="../internal/plan/${esc(link[2])}">${esc(link[1])}</a>` }];
+}));
+const status = idx.match(/^- \*\*Trạng thái:\*\* ([\s\S]*?)(?=\r?\n- \*\*)/m)[1].replace(/\s+/g, ' ').trim();
 
 // ---------- đọc Markdown ----------
 function parseBlocks(file){
@@ -43,14 +54,14 @@ function parseTable(file, prefix){
 const g0 = parseTable('hop_dong.md', 'G0').map(r => ({ ...r, what:r.what.split(' — ')[0] }));
 const c0 = parseTable('hop_dong.md', 'C0').map(r => ({ id:r.id, what:r.what.split(' — ')[0], check:r.check, wait:!!r.wait, q:r.wait }));
 B['G0'] = { id:'G0', title:'Cổng mật mã', steps:g0.map(r => ({ id:r.id, what:r.what, check:r.check })), info:[['Trách nhiệm','Trả lời bằng test và số đo: HPKE, Ed25519, AES-GCM của `cryptography` có đúng và đủ nhanh trên Pi thật không; long-poll qua TLS của cheroot có giữ được không. Không đạt thì dừng và hỏi user.']], notes:[] };
-B['C0'] = { id:'C0', title:'Hợp đồng chung', steps:c0.map(r => ({ id:r.id, what:r.what + (r.q ? ' (' + r.q + ')' : ''), check:r.check, wait:r.wait })), info:[['Trách nhiệm','Chốt routing, gói FM1, body route agent, snapshot, loại lệnh, ngữ pháp helper, chủ sở hữu bảng, cấu hình và hàm nối. Chưa duyệt xong thì không khối nào bắt đầu code.']], notes:[] };
+B['C0'] = { id:'C0', title:'Hợp đồng chung', steps:c0.map(r => ({ id:r.id, what:r.what + (r.q ? ' (' + r.q + ')' : ''), check:r.check, wait:r.wait })), info:[['Trách nhiệm','Chốt routing, gói FM1, body route agent, snapshot, loại lệnh, ngữ pháp helper, chủ sở hữu bảng, cấu hình và hàm nối. User cho phép làm hạ tầng độc lập với stub; các khối nghiệp vụ vẫn cần hợp đồng được duyệt.']], notes:[] };
 
 // ---------- thông tin không nằm trong Markdown dạng bảng ----------
 const META = {
   'G0':{short:'Cổng mật mã', side:'t0', wave:0, gate:[], file:'hop_dong.md'},
-  'C0':{short:'Hợp đồng chung', side:'t0', wave:0, gate:['Q8','Q1'], file:'hop_dong.md'},
-  'S-DB':{short:'MySQL, migration', side:'srv', wave:1, gate:[]},
-  'S-NET':{short:'TLS, hai cổng', side:'srv', wave:1, gate:['Q2','Q9'], partial:true},
+  'C0':{short:'Hợp đồng chung', side:'t0', wave:0, gate:['Q1'], file:'hop_dong.md'},
+  'S-DB':{short:'SQLite tạm, migration', side:'srv', wave:1, gate:[]},
+  'S-NET':{short:'TLS, hai cổng', side:'srv', wave:1, gate:['Q4','Q9'], partial:true},
   'UI-SHELL':{short:'Khung trang quản trị', side:'ui', wave:1, gate:[]},
   'S-SECA':{short:'Bảo mật A', side:'sec', wave:2, gate:[]},
   'S-FM1':{short:'Middleware FM1', side:'sec', wave:2, gate:['Q1']},
@@ -76,8 +87,12 @@ const META = {
 };
 for (const id in META){ if (!B[id]) throw new Error('thiếu khối trong Markdown: ' + id); Object.assign(B[id], META[id]); B[id].file = B[id].file || (id.startsWith('A-') || id.startsWith('H-') ? 'khoi_may.md' : 'khoi_server.md'); }
 for (const id in B){ if (!META[id]) throw new Error('khối lạ trong Markdown: ' + id); }
-const blocked = b => b.gate.length && !b.partial;           // cả khối chờ user
-const sym = b => blocked(b) ? '⏸' : '○';
+for (const id in progress) {
+  if (!B[id]) throw new Error('khối tiến độ không tồn tại: ' + id);
+  B[id].progress = progress[id];
+}
+const blocked = b => !b.progress && b.gate.length && !b.partial; // cả khối chưa làm chờ user
+const sym = b => b.progress ? b.progress.state : blocked(b) ? '⏸' : '○';
 const IDS = Object.keys(META);
 const nSteps = IDS.reduce((n, id) => n + B[id].steps.length, 0);
 
@@ -96,7 +111,7 @@ const POS = {
 const W = 1500, H = 780;
 const box = id => {
   const b = B[id], [x, y, w, h] = POS[id];
-  const st = `${sym(b)} 0/${b.steps.length}`;
+  const st = sym(b);
   let t = `<g class="bk ${b.side}${blocked(b) ? ' wait' : ''}"><a href="#k-${id.toLowerCase()}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="9"/>`;
   t += `<text class="bid" x="${x + 10}" y="${y + 18}">${id}</text><text class="bst" x="${x + w - 10}" y="${y + 18}" text-anchor="end">${st}</text>`;
   t += `<text class="bnm" x="${x + 10}" y="${y + 36}">${esc(b.short)}</text>`;
@@ -133,7 +148,7 @@ ${edges}${IDS.map(box).join('')}</svg>`;
 
 // ---------- thứ tự làm theo đợt ----------
 const WAVE_NAME = ['Tầng 0 · hợp đồng và cổng mật mã', 'Đợt 1 · chỉ cần hợp đồng', 'Đợt 2 · cần khối nền chạy thật', 'Đợt 3 · module nghiệp vụ', 'Đợt 4 · khối cắt ngang'];
-const chip = id => { const b = B[id]; return `<li class="chip ${b.side}${blocked(b) ? ' wait' : ''}"><a href="#k-${id.toLowerCase()}"><span class="st">${sym(b)}</span><b>${id}</b> ${esc(b.short)} <span class="cnt">0/${b.steps.length}</span>${b.gate.length ? `<span class="cq">${b.gate.join(' · ')}</span>` : ''}</a></li>`; };
+const chip = id => { const b = B[id]; return `<li class="chip ${b.side}${blocked(b) ? ' wait' : ''}"><a href="#k-${id.toLowerCase()}"><span class="st">${sym(b)}</span><b>${id}</b> ${esc(b.short)} <span class="cnt">${b.steps.length} bước</span>${b.gate.length ? `<span class="cq">${b.gate.join(' · ')}</span>` : ''}</a></li>`; };
 const waves = WAVE_NAME.map((n, w) => `<div class="wave"><div class="wh">${esc(n)}</div><ul class="chips">${IDS.filter(id => B[id].wave === w).map(chip).join('')}</ul></div>`).join('');
 
 // ---------- ráp và triển khai (đọc từ rap_trien_khai.md) ----------
@@ -164,20 +179,16 @@ const xs = RAPS.filter(r => r.id[0] === 'X').map(rapCard).join('');
 // ---------- thẻ từng khối ----------
 const card = id => { const b = B[id];
   return `<article class="blk ${b.side}" id="k-${id.toLowerCase()}">
-  <header><span class="ph-id">${id}</span><div><h3>${esc(b.title)}</h3><div class="src">Đợt ${b.wave}${b.gate.length ? ' · Chờ: ' + b.gate.map(q => `<a href="#${q.toLowerCase()}">${q}</a>`).join(', ') : ''} · Chi tiết: <a href="../internal/plan/${b.file}"><code>internal/plan/${b.file}</code></a></div></div><span class="pill${blocked(b) ? ' h' : ''}">${blocked(b) ? '⏸ chờ ' + b.gate.join(', ') : '○ chưa làm'}</span></header>
+  <header><span class="ph-id">${id}</span><div><h3>${esc(b.title)}</h3><div class="src">Đợt ${b.wave}${b.gate.length ? ' · Chờ: ' + b.gate.map(q => `<a href="#${q.toLowerCase()}">${q}</a>`).join(', ') : ''} · Chi tiết: <a href="../internal/plan/${b.file}"><code>internal/plan/${b.file}</code></a></div></div><span class="pill${blocked(b) ? ' h' : ''}">${b.progress ? sym(b) + ' đã có bằng chứng' : blocked(b) ? '⏸ chờ ' + b.gate.join(', ') : '○ chưa làm'}</span></header>
+${b.progress ? `<p class="note">${md(b.progress.note)} · ${b.progress.evidence}</p>` : ''}
   ${b.info.length ? `<dl class="io">${b.info.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${md(v)}</dd></div>`).join('')}</dl>` : ''}
-  <div class="tbl"><table><thead><tr><th>Bước</th><th>Việc</th><th>Kiểm</th></tr></thead><tbody>${b.steps.map(s => `<tr><td class="sid">${s.wait ? '⏸' : sym(b)} ${s.id}</td><td>${md(s.what)}</td><td>${md(s.check)}</td></tr>`).join('')}</tbody></table></div>
+  <div class="tbl"><table><thead><tr><th>Bước</th><th>Việc</th><th>Kiểm</th></tr></thead><tbody>${b.steps.map(s => `<tr><td class="sid">${s.wait ? '⏸ ' : ''}${s.id}</td><td>${md(s.what)}</td><td>${md(s.check)}</td></tr>`).join('')}</tbody></table></div>
   ${b.notes.map(([k, v]) => `<p class="note"><b>${esc(k)}:</b> ${md(v)}</p>`).join('')}
 </article>`; };
 const groups = [['Tầng 0', ['G0','C0']], ['Nền và khung server', ['S-DB','S-NET','UI-SHELL']], ['Bảo mật', ['S-SECA','S-FM1']], ['Module server', ['M-ACC','M-MAC','M-KEY','M-CAT','M-MENU','M-PUB','M-ING','M-REP','M-CMD']], ['Cắt ngang', ['S-EPOCH']], ['Nền của máy', ['A-POS','A-HOST','A-DB','H-LOCAL']], ['Kênh và module của máy', ['A-NET','A-APPLY','A-STOCK','A-UP','A-RUN']]];
 const cards = groups.map(([n, ids]) => `<h3 class="grp">${esc(n)}</h3>${ids.map(card).join('')}`).join('');
 
 // ---------- bảng mối nối, câu hỏi: đọc từ index.md ----------
-const idx = fs.readFileSync(PLAN + 'index.md', 'utf8');
-const tableAfter = (heading, cols) => {
-  const part = idx.split(heading)[1].split(/\r?\n##+ /)[0];
-  return part.split(/\r?\n/).filter(l => /^\|/.test(l) && !/^\|\s*-/.test(l)).slice(1).map(l => l.replace(/^\|\s*|\s*\|\s*$/g, '').split(/\s\|\s/));
-};
 const joints = tableAfter('## Mối nối giữa các khối');
 const qs = tableAfter('## Câu hỏi chờ user');
 
@@ -201,10 +212,11 @@ ${css}
       <p class="lead">Mỗi khối là một ô trong sơ đồ tổng quan của thiết kế: một trách nhiệm, hợp đồng vào ra rõ ràng, test riêng bằng stub. Có ${IDS.length} khối với ${nSteps} bước, rồi 6 lần ráp và 6 bước triển khai. Trang này đọc trực tiếp từ các file Markdown ở <code>internal/plan/</code>.</p>
     </div>
     <div class="meta">
-      <span><b>Trạng thái:</b> chưa thực hiện, chưa có dòng code nào</span>
+      <span><b>Trạng thái:</b> ${esc(status.split('.')[0])}</span>
       <span><b>Thiết kế:</b> <a href="server_architect.html">server_architect.html</a></span>
       <span><b>Plan chi tiết:</b> <a href="../internal/plan/index.md"><code>internal/plan/index.md</code></a></span>
       <span><b>Lập ngày:</b> 08/10/2026</span>
+      <span><b>Review/sửa lỗi:</b> <a href="../internal/plan/bang_chung/REVIEW_CODEX.md">Bằng chứng và kiểm lại</a></span>
     </div>
   </header>
   <div class="shell">
@@ -224,19 +236,22 @@ ${css}
     <main>
       <section id="can-biet">
         <div class="sec-head"><span class="sec-no">Mục 1</span><h2>Bạn cần biết</h2></div>
+        <p class="prose">${md(status)}</p>
+        <div class="tbl"><table><thead><tr><th>Khối</th><th>Trạng thái</th><th>Đã có / còn chờ</th><th>Bằng chứng</th></tr></thead><tbody>${Object.entries(progress).map(([id, p]) => `<tr><td><a href="#k-${id.toLowerCase()}">${esc(id)}</a></td><td>${p.state}</td><td>${md(p.note)}</td><td>${p.evidence}</td></tr>`).join('')}</tbody></table></div>
+        <p class="prose">SQLite .db tạm, sẽ migrate MySQL sau. Wiring hiện là khung; R1–R6 chưa bắt đầu. <a href="../internal/plan/giao_viec/CODEX_SQLITE_THONG_BAO_CLAUDE.md">Ghi chú bàn giao Claude</a> · <a href="../internal/plan/giao_viec/README.md">Phân việc</a>.</p>
         <div class="need"><ol>
           <li><b>Xây từng khối, rồi ráp.</b> Mỗi khối làm xong và test xong một mình, dùng stub thay cho khối bên kia. Sáu lần ráp R1–R6 mới nối các khối thật với nhau và chạy kịch bản đầu–cuối.</li>
           <li><b>Module cô lập, nối tại một điểm.</b> Mỗi khối là một module trong thư mục riêng, không import module khác. Mọi thứ nối với nhau chỉ ở <code>wiring.py</code> (server) và <code>agent/main.py</code> (máy), qua các <code>Protocol</code> trong <code>contracts/</code>. Muốn lần một luồng: đọc <code>wiring.py</code> rồi <code>contracts/</code>. Test tự động chặn import chéo. Một khối, một agent.</li>
           <li><b>Hợp đồng làm trước.</b> Tầng 0 chốt routing, gói FM1, body route agent, snapshot menu, loại lệnh, ngữ pháp helper và bảng nào do khối nào ghi. Có hợp đồng thì hai đầu một mối nối làm song song được.</li>
           <li><b>G0 vẫn là cổng chặn.</b> HPKE của <code>cryptography</code> không liên thông byte-exact, hoặc chưa có số đo trên Pi thật, thì dừng lại hỏi bạn.</li>
           <li><b>Lỗi khi ráp quay về khối.</b> Lỗi tìm thấy lúc ráp được ghi về khối gây lỗi; khối đó thêm test tái hiện rồi sửa. Không vá tại chỗ trong bước ráp.</li>
-          <li><b>Mọi khối phía máy đang chờ Q6</b> (nhánh <code>version1.0</code> hay <code>version1.1</code>). Bước đầu tiên chờ Q8 (git init). Các câu khác chỉ chặn đúng khối cần tới.</li>
+          <li><b>Mọi khối phía máy đang chờ Q6</b> (nhánh <code>version1.0</code> hay <code>version1.1</code>). Q8 đã xử lý: repo và C0.1/C0.2 có commit. Các câu khác chỉ chặn đúng khối cần tới.</li>
         </ol></div>
       </section>
 
       <section id="so-do">
         <div class="sec-head"><span class="sec-no">Mục 2</span><h2>Sơ đồ khối và trạng thái</h2></div>
-        <p class="prose">Bố cục theo sơ đồ "râu" ở mục 1 của thiết kế. Mỗi ô ghi trạng thái, số bước đạt trên tổng số, đợt nên làm và câu hỏi đang chờ. Bấm vào ô để tới thẻ của khối.</p>
+        <p class="prose">Bố cục theo sơ đồ "râu" ở mục 1 của thiết kế. Mỗi ô ghi trạng thái khối, đợt nên làm và câu hỏi đang chờ. Khối có bằng chứng dev nhưng còn gate nghiệm thu giữ →. Bấm vào ô để xem chi tiết.</p>
         <div class="legend" aria-label="Chú giải">
           <span><i class="sym">○</i>chưa làm</span><span><i class="sym run">→</i>đang làm hoặc review</span><span><i class="sym ok">✓</i>đạt</span><span><i class="sym bad">✗</i>chưa đạt</span><span><i class="sym wait">⏸</i>cả khối chờ bạn chốt</span>
           <span><i class="sw srv"></i>khối server</span><span><i class="sw sec"></i>bảo mật</span><span><i class="sw ui"></i>trình duyệt</span><span><i class="sw mac"></i>khối máy</span><span><i class="ln a"></i>qua Bảo mật A</span><span><i class="ln f"></i>qua FM1</span>
@@ -279,7 +294,7 @@ ${css}
 
       <section id="tung-khoi">
         <div class="sec-head"><span class="sec-no">Mục 8</span><h2>Từng khối</h2></div>
-        <p class="prose">Mỗi thẻ ghi trách nhiệm, khối cung cấp gì, cần gì, stub dùng khi test riêng và các bước kèm phép kiểm. Bước có ⏸ là bước chờ bạn chốt.</p>
+        <p class="prose">Mỗi thẻ ghi tiến độ khối và bằng chứng hiện có, rồi phạm vi kế hoạch từng bước. Bước có ⏸ là bước chờ bạn chốt; bảng bước không phải số bước đã nghiệm thu.</p>
         <div class="blks">${cards}</div>
       </section>
 

@@ -2,6 +2,10 @@
 
 Ngày: 2026-10-07. Trạng thái: **ĐỀ XUẤT, chờ user chốt** các mục ở §8.
 
+Hồ sơ lịch sử: HTTP/HMAC/waitress và route ở đây không phải cấu hình hiện tại.
+Đọc [bối cảnh mới](hieu_biet_server_me.md) và [plan](../../internal/plan/index.md)
+để tiếp tục triển khai; giữ nội dung bên dưới làm căn cứ đối chiếu.
+
 ## 1. Hiện trạng version1.0 làm thay đổi thiết kế
 
 - **Máy không mở cổng ra LAN.** `configuration/net_addresses.py:157-196` (`bind_hosts`) chỉ nghe loopback và tailnet.

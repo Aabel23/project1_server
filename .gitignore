@@ -3,6 +3,11 @@ __pycache__/
 .venv/
 venv/
 .pytest_cache/
+# Dữ liệu SQLite tạm không vào repo
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 # Khoá và bí mật không bao giờ vào repo
 *.key
 *.pem

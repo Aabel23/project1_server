@@ -1,0 +1,35 @@
+# Cấu hình dev đề xuất; cung cấp cert/key và hostname do vận hành chọn.
+# SQLite tạm thời; sẽ migrate schema/dữ liệu sang MySQL sau review độc lập.
+[db]
+path = "var/flexmix.db"
+timeout = 10
+
+[net]
+cert_file = "var/tls/server.crt"
+key_file = "var/tls/server.key"
+ca_file = "var/tls/ca.crt"
+hostname = "flexmix.local"
+host = "0.0.0.0"
+admin_port = 443
+agent_port = 8443
+http_port = 80
+admin_threads = 8
+agent_threads = 18 # Giả định 10 máy + 8; Q9 vẫn còn chờ.
+http_threads = 4
+timeout = 60
+shutdown_timeout = 30
+
+[fm1]
+audience = "flexmix-dev"
+
+[protocol]
+window_seconds = 120
+enroll_seconds = 600
+enroll_attempts = 5
+revoked_notice_seconds = 60
+ledger_days = 30
+poll_seconds = 25
+read_seconds = 5
+write_seconds = 30
+reprint_seconds = 120
+display_seconds = 10

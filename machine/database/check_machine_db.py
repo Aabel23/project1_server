@@ -1,143 +1,105 @@
-"""python machine/database/check_machine_db.py [--mysql]
-
---mysql uses BEVERAGE_DB_HOST/PORT/USER/PASSWORD and a disposable database.
-It never selects, migrates, or drops the configured BEVERAGE_DB_NAME.
-"""
+"""python machine/database/check_machine_db.py; test writes stay in memory."""
 
 import ast
-import os
 from pathlib import Path
-import re
 import sqlite3
-import sys
-import uuid
 
+FOLDER = Path(__file__).resolve().parent
+SOURCE = FOLDER.parents[2] / "version1.0"
+path = FOLDER / "machine.db"
+assert path.read_bytes()[:16] == b"SQLite format 3\x00"
 
-SOURCE = Path(__file__).resolve().parents[3] / "version1.0"
-SCHEMA = Path(__file__).with_name("machine.db")
+with sqlite3.connect(path.as_uri() + "?mode=ro", uri=True) as artifact:
+    assert artifact.execute("PRAGMA integrity_check").fetchone() == ("ok",)
+    assert artifact.execute("PRAGMA foreign_key_check").fetchall() == []
+    objects = artifact.execute(
+        "SELECT type,name,sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name"
+    ).fetchall()
+    tables = [name for kind, name, _ in objects if kind == "table"]
+    assert not set(tables) & {"admin_user", "role_permission"}
+    for table in tables:
+        assert artifact.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone() == (0,)
+    db = sqlite3.connect(":memory:")
+    artifact.backup(db)
 
-
-def source_values(relative_path, names):
-    tree = ast.parse((SOURCE / relative_path).read_text(encoding="utf-8-sig"))
-    return {
-        target.id: ast.literal_eval(node.value)
-        for node in tree.body if isinstance(node, ast.Assign)
-        for target in node.targets if isinstance(target, ast.Name) and target.id in names
-    }
-
-
-# Reuse the existing SQL splitter without importing DB config or machine hardware.
-tree = ast.parse((SOURCE / "database/db_core.py").read_text(encoding="utf-8-sig"))
-splitter = next(node for node in tree.body
-                if isinstance(node, ast.FunctionDef) and node.name == "split_sql_statements")
-namespace = {}
-exec(compile(ast.Module(body=[splitter], type_ignores=[]), "split_sql", "exec"), namespace)
-statements = namespace["split_sql_statements"](SCHEMA.read_text(encoding="utf-8"))
-tables = {re.match(r"CREATE TABLE (\w+)", sql)[1]
-          for sql in statements if sql.startswith("CREATE TABLE ")}
-references = {name for sql in statements for name in re.findall(r"REFERENCES (\w+)", sql)}
-assert references <= tables, references - tables
-assert not tables & {"admin_user", "role_permission", "menu", "machine"}
-assert not any(sql.startswith(("ALTER ", "DROP ", "INSERT ", "UPDATE ")) for sql in statements)
-queries = []
-for path, names in (
-    ("store_gui/sync_menu.py", {"DRINK_QUERY", "SETTING_QUERY", "BESTSELLER_QUERY",
-                               "CATEGORY_QUERY", "MAPPING_QUERY", "RECIPE_QUERY"}),
-    ("database/export_data.py", {"MENU_QUERY", "ACTION_QUERY", "RECIPE_QUERY"}),
-    ("scan/generate_drink_qr.py", {"DRINK_QUERY", "INGREDIENT_QUERY", "RECIPE_QUERY"}),
-):
-    values = source_values(path, names)
-    assert values.keys() == names
-    queries.extend(values.items())
-
-# Prepare the actual reader SQL against declared columns in memory.
-# This catches removed columns still used by runtime; it does NOT test MySQL DDL/triggers.
-with sqlite3.connect(":memory:") as columns_check:
-    for sql in statements:
-        if not sql.startswith("CREATE TABLE "):
-            continue
-        table = re.match(r"CREATE TABLE (\w+)", sql)[1]
-        columns = re.findall(
-            r"^    (\w+)\s+(?:INT|BIGINT|VARCHAR|CHAR|TEXT|DECIMAL|DATETIME|BOOLEAN|TINYINT)\b",
-            sql, re.MULTILINE,
-        )
-        columns_check.execute(f"CREATE TABLE {table} ({','.join(columns)})")
-    for name, sql in queries:
-        sql = sql.replace("NOW() - INTERVAL %s DAY", "datetime('now', '-' || ? || ' days')")
-        columns_check.execute("EXPLAIN " + sql.replace("%s", "?"),
-                              (30, 6) if name == "BESTSELLER_QUERY" else ())
-print(f"Static checks passed: {len(tables)} tables, {len(statements)} statements, "
-      f"{len(queries)} reader queries match declared columns.")
-
-if "--mysql" not in sys.argv[1:]:
-    print("MySQL execution not tested; use --mysql with a test MySQL 8 server.")
-    raise SystemExit(0)
-
-import mysql.connector
-
-connection = mysql.connector.connect(
-    host=os.getenv("BEVERAGE_DB_HOST", "localhost"),
-    port=int(os.getenv("BEVERAGE_DB_PORT", "3306")),
-    user=os.getenv("BEVERAGE_DB_USER", "root"),
-    password=os.environ["BEVERAGE_DB_PASSWORD"],
-    connection_timeout=5,
-    autocommit=True,
-)
-database = "machine_schema_check_" + uuid.uuid4().hex
-assert re.fullmatch(r"machine_schema_check_[0-9a-f]{32}", database)
-cursor = connection.cursor()
-created = False
 try:
-    cursor.execute(f"CREATE DATABASE `{database}` CHARACTER SET utf8mb4")
-    created = True
-    cursor.execute(f"USE `{database}`")
-    for sql in statements:
-        cursor.execute(sql)
+    with sqlite3.connect(":memory:") as rebuilt:
+        rebuilt.executescript((FOLDER / "machine.sql").read_text(encoding="utf-8"))
+        assert rebuilt.execute(
+            "SELECT type,name,sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name"
+        ).fetchall() == objects
+    db.execute("PRAGMA foreign_keys=ON")
+    db.execute("PRAGMA recursive_triggers=ON")
+    readers = 0
+    for relative, names in (
+        ("store_gui/sync_menu.py", {"DRINK_QUERY", "SETTING_QUERY", "BESTSELLER_QUERY",
+                                   "CATEGORY_QUERY", "MAPPING_QUERY", "RECIPE_QUERY"}),
+        ("database/export_data.py", {"MENU_QUERY", "ACTION_QUERY", "RECIPE_QUERY"}),
+        ("scan/generate_drink_qr.py", {"DRINK_QUERY", "INGREDIENT_QUERY", "RECIPE_QUERY"}),
+    ):
+        tree = ast.parse((SOURCE / relative).read_text(encoding="utf-8-sig"))
+        queries = {
+            target.id: ast.literal_eval(node.value)
+            for node in tree.body if isinstance(node, ast.Assign)
+            for target in node.targets if isinstance(target, ast.Name) and target.id in names
+        }
+        assert queries.keys() == names
+        for name, sql in queries.items():
+            # Adapt date/parameter syntax only; version1.0 still uses its MySQL driver.
+            sql = sql.replace("NOW() - INTERVAL %s DAY", "datetime('now','-' || ? || ' days')")
+            db.execute(sql.replace("%s", "?"),
+                       (30, 6) if name == "BESTSELLER_QUERY" else ()).fetchall()
+            readers += 1
 
-    # Execute the real non-admin reader queries against the schema.
-    for name, sql in queries:
-        cursor.execute(sql, (30, 6) if name == "BESTSELLER_QUERY" else None)
-        cursor.fetchall()
+    db.execute("INSERT INTO drink (drink_id,drink_name,price) VALUES (1001,'Test',30000)")
+    db.execute("INSERT INTO drink (drink_id,drink_name) VALUES (1002,'Other')")
+    db.execute("INSERT INTO ingredient (ingredient_id,ingredient_name,amount,threshold_gram,gpio) "
+               "VALUES (1,'Water',100,60,'G26')")
+    db.execute("INSERT INTO recipe VALUES (1001,1,1,50)")
+    db.commit()
+    assert db.execute("SELECT in_stock FROM drink ORDER BY drink_id").fetchall() == [(1,), (0,)]
+    db.execute("UPDATE ingredient SET amount=10 WHERE ingredient_id=1")
+    assert db.execute("SELECT in_stock FROM ingredient").fetchone() == (0,)
+    assert db.execute("SELECT in_stock FROM drink WHERE drink_id=1001").fetchone() == (0,)
+    db.rollback()
+    assert db.execute("SELECT amount,in_stock FROM ingredient").fetchone() == (100, 1)
+    assert db.execute("SELECT in_stock FROM drink WHERE drink_id=1001").fetchone() == (1,)
+    db.execute("UPDATE recipe SET drink_id=1002 WHERE drink_id=1001")
+    assert db.execute("SELECT in_stock FROM drink ORDER BY drink_id").fetchall() == [(0,), (1,)]
+    db.rollback()
+    for sql in (
+        "UPDATE ingredient SET amount=-1 WHERE ingredient_id=1",
+        "UPDATE ingredient SET gpio='Gbad' WHERE ingredient_id=1",
+        "DELETE FROM ingredient WHERE ingredient_id=1",
+    ):
+        try:
+            db.execute(sql)
+        except sqlite3.IntegrityError:
+            db.rollback()
+        else:
+            raise AssertionError(f"Invalid operation accepted: {sql}")
 
-    cursor.execute("INSERT INTO drink (drink_id,drink_name,price) VALUES (1001,'Test',30000)")
-    cursor.execute("INSERT INTO ingredient (ingredient_id,ingredient_name,amount,threshold_gram) "
-                   "VALUES (1,'Water',100,60)")
-    cursor.execute("INSERT INTO recipe VALUES (1001,1,1,50)")
-    cursor.execute("SELECT in_stock FROM drink WHERE drink_id=1001")
-    assert cursor.fetchone() == (1,)
-    connection.start_transaction()
-    cursor.execute("UPDATE ingredient SET amount=10 WHERE ingredient_id=1")
-    cursor.execute("SELECT in_stock FROM drink WHERE drink_id=1001")
-    assert cursor.fetchone() == (0,)
-    connection.rollback()
-    cursor.execute("SELECT amount,in_stock FROM ingredient WHERE ingredient_id=1")
-    assert cursor.fetchone() == (100, 1)
-    cursor.execute("SELECT in_stock FROM drink WHERE drink_id=1001")
-    assert cursor.fetchone() == (1,)
-
-    cursor.execute("INSERT INTO order_ticket (drink_id,price,drink_name,payload,payload_hash) "
-                   "SELECT drink_id,price,drink_name,'123',%s FROM drink WHERE drink_id=1001",
-                   ("a" * 64,))
+    db.execute("INSERT INTO order_ticket (drink_id,price,drink_name,payload,payload_hash,updated_at) "
+               "SELECT drink_id,price,drink_name,'123',?,'2000-01-01 00:00:00' "
+               "FROM drink WHERE drink_id=1001", ("a" * 64,))
+    db.commit()
     for expected in (1, 0):
-        cursor.execute("UPDATE order_ticket SET status='in_progress' "
-                       "WHERE payload_hash=%s AND status='unused'", ("a" * 64,))
-        assert cursor.rowcount == expected
+        assert db.execute("UPDATE order_ticket SET status='in_progress' "
+                          "WHERE payload_hash=? AND status='unused'", ("a" * 64,)).rowcount == expected
+    db.commit()
+    assert db.execute("SELECT updated_at FROM order_ticket").fetchone()[0] != "2000-01-01 00:00:00"
     try:
-        cursor.execute("INSERT INTO order_ticket (drink_id,payload,payload_hash) "
-                       "VALUES (1001,'123',%s)", ("a" * 64,))
-    except mysql.connector.IntegrityError as error:
-        assert error.errno == 1062
+        db.execute("INSERT INTO order_ticket (drink_id,payload,payload_hash) VALUES (1001,'123',?)",
+                   ("a" * 64,))
+    except sqlite3.IntegrityError:
+        db.rollback()
     else:
-        raise AssertionError("Duplicate QR must be rejected")
-    cursor.execute("DELETE FROM recipe WHERE drink_id=1001")
-    cursor.execute("SELECT in_stock FROM drink WHERE drink_id=1001")
-    assert cursor.fetchone() == (0,)
-    cursor.execute("DELETE FROM drink WHERE drink_id=1001")
-    cursor.execute("SELECT price,drink_name FROM order_ticket")
-    assert cursor.fetchone() == (30000, "Test")
-    print("MySQL checks passed: readers, stock triggers/rollback, QR single claim, sale history.")
+        raise AssertionError("Duplicate QR accepted")
+    db.execute("DELETE FROM recipe WHERE drink_id=1001")
+    assert db.execute("SELECT in_stock FROM drink WHERE drink_id=1001").fetchone() == (0,)
+    db.execute("DELETE FROM drink WHERE drink_id=1001")
+    assert db.execute("SELECT price,drink_name FROM order_ticket").fetchone() == (30000, "Test")
+    print(f"PASS: SQLite file, integrity, {len(tables)} empty tables, SQL reproduction, "
+          f"{readers} readers, stock/rollback, constraints, QR single claim, timestamps, sale history.")
 finally:
-    if created:
-        cursor.execute(f"DROP DATABASE `{database}`")
-    cursor.close()
-    connection.close()
+    db.close()

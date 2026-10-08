@@ -1,0 +1,26 @@
+# Mẫu CHƯA CÀI: thay <WIRING_MODULE> khi C0/R1 cung cấp entrypoint thật.
+# Entry phải tạo hai app, NetSettings rồi gọi serve(admin_app, agent_app, settings).
+# Tạo user/group flexmix và cấp quyền đọc leaf.key 0600 cho user này.
+[Unit]
+Description=FlexMix server
+After=network.target
+
+[Service]
+Type=simple
+User=flexmix
+Group=flexmix
+WorkingDirectory=/opt/flexmix/server
+ExecStart=/opt/flexmix/server/.venv/bin/python -m <WIRING_MODULE>
+Restart=on-failure
+RestartSec=3
+KillSignal=SIGTERM
+TimeoutStopSec=100
+UMask=0077
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

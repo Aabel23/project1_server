@@ -1,7 +1,14 @@
 # Tầng 0 · Cổng mật mã và hợp đồng
 
-- **Trạng thái:** CHƯA THỰC HIỆN.
+- **Trạng thái:** ĐÃ CÓ CODE/ĐỀ XUẤT TRÊN DEV. G0.6 còn chờ Pi thật;
+  hợp đồng C0 còn chờ Q1 và review mật mã, chưa đánh ✓ toàn tầng 0.
+  [C0.md](bang_chung/C0.md), [G0.md](bang_chung/G0.md) và
+  [REVIEW_CODEX.md](bang_chung/REVIEW_CODEX.md) ghi bằng chứng/giới hạn.
 - **Chưa xong tầng 0 thì không khối nào bắt đầu code.** Khối chỉ dựa vào hợp đồng đã được reviewer duyệt.
+
+Theo chỉ đạo tiếp của user, Codex đã làm phần độc lập S-DB/S-NET/UI-SHELL
+với stub và tiếp quản hợp đồng Claude. Đây không phải duyệt Q1 hoặc nghiệm thu
+production. Các khối nghiệp vụ dùng mật mã vẫn cần chốt hợp đồng trước.
 
 Hợp đồng nằm ở `server/internal/contracts/`. Mỗi file ghi:
 
@@ -32,7 +39,7 @@ Hợp đồng nằm ở `server/internal/contracts/`. Mỗi file ghi:
 
 | ID | Hợp đồng | File | Nội dung chính | Chờ user |
 |---|---|---|---|---|
-| C0.1 | Khởi tạo repo | `server/.git`, `.gitignore`, `README.md` | `git init`; bỏ bản trùng `server/routing.py`, chỉ giữ `server/server/config/routing.py` | Q8 |
+| C0.1 | Khởi tạo repo | `server/.git`, `.gitignore`, `README.md` | Đã thực hiện trong commit `aa371dc`; bỏ routing trùng, giữ `server/server/config/routing.py` | |
 | C0.2 | Routing bản 2 và `ROUTE_POLICY` | `server/server/config/routing.py` | Theo mục 7 "Cần sửa routing.py": đổi POST, đổi `AGENT_RESULTS_PATH`, media theo sha256, bỏ heartbeat và token rotate, thêm route ghép, thu hồi, lệnh, màn hình, xác thực lại, giờ, CA. Thêm `INGREDIENT_REGISTRY_PATH`, `MENU_BULK_PATH` (thiết kế ghi "cần thêm"). `ROUTE_POLICY`: mỗi route agent một chế độ `trust` / `enroll` / `fm1` / `tls_only` | |
 | C0.3 | Gói FM1 | `contracts/fm1_wire.md`, `tests/vectors/fm1/*.json` | Trường M theo mục 4.2; LP, Tuple, sáu nhãn; khung request và response; thân lỗi 4xx cố định; bộ vector dùng chung cho server và máy | Q1 |
 | C0.4 | Body route agent | `contracts/agent_routes.md` | Từng route ở bảng mục 7: trường máy gửi, trường server trả, giới hạn kích thước, mã trạng thái nghiệp vụ | |
